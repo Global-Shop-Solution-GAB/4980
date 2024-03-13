@@ -1,0 +1,1235 @@
+Program.Sub.ScreenSU.Start
+Gui.FormNestHistory..Create
+Gui.FormNestHistory..Caption("Nest History")
+Gui.FormNestHistory..Size(15315,9270)
+Gui.FormNestHistory..MinX(11700)
+Gui.FormNestHistory..MinY(2000)
+Gui.FormNestHistory..Position(0,0)
+Gui.FormNestHistory..BackColor(-2147483633)
+Gui.FormNestHistory..MousePointer(0)
+Gui.FormNestHistory..Event(UnLoad,FormNestHistory_UnLoad)
+Gui.FormNestHistory.tabNests.Create(Tab)
+Gui.FormNestHistory.tabNests.Size(15315,8880)
+Gui.FormNestHistory.tabNests.Position(0,150)
+Gui.FormNestHistory.tabNests.Anchor(15)
+Gui.FormNestHistory.tabNests.Zorder(1)
+Gui.FormNestHistory.tabNests.Tabs(5)
+Gui.FormNestHistory.tabNests.SetTab(0)
+Gui.FormNestHistory.tabNests.Caption("Nests")
+Gui.FormNestHistory.tabNests.SetTab(1)
+Gui.FormNestHistory.tabNests.Caption("Work Orders")
+Gui.FormNestHistory.tabNests.SetTab(2)
+Gui.FormNestHistory.tabNests.Caption("Material Issues")
+Gui.FormNestHistory.tabNests.SetTab(3)
+Gui.FormNestHistory.tabNests.Caption("Drops")
+Gui.FormNestHistory.tabNests.SetTab(4)
+Gui.FormNestHistory.tabNests.Caption("Part Separation")
+Gui.FormNestHistory.gsgcNestHistory.Create(GsGridControl)
+Gui.FormNestHistory.gsgcNestHistory.Size(15210,8490)
+Gui.FormNestHistory.gsgcNestHistory.Position(-15,-15)
+Gui.FormNestHistory.gsgcNestHistory.Parent("tabNests",0)
+Gui.FormNestHistory.gsgcNestHistory.Event(RowCellClick,gsgcNestHistory_RowCellClick)
+Gui.FormNestHistory.gsgcWorkOrders.Create(GsGridControl)
+Gui.FormNestHistory.gsgcWorkOrders.Size(15210,8490)
+Gui.FormNestHistory.gsgcWorkOrders.Position(-15,-15)
+Gui.FormNestHistory.gsgcWorkOrders.Parent("tabNests",1)
+Gui.FormNestHistory.gsgcWorkOrders.Event(RowCellClick,gsgcWorkOrders_RowCellClick)
+Gui.FormNestHistory.gsgcIssues.Create(GsGridControl)
+Gui.FormNestHistory.gsgcIssues.Size(15210,8490)
+Gui.FormNestHistory.gsgcIssues.Position(-15,-15)
+Gui.FormNestHistory.gsgcIssues.Parent("tabNests",2)
+Gui.FormNestHistory.gsgcIssues.Event(RowCellClick,gsgcIssues_RowCellClick)
+Gui.FormNestHistory.gsgcDrops.Create(GsGridControl)
+Gui.FormNestHistory.gsgcDrops.Size(15210,8490)
+Gui.FormNestHistory.gsgcDrops.Position(-15,-15)
+Gui.FormNestHistory.gsgcDrops.Parent("tabNests",3)
+Gui.FormNestHistory.gsgcDrops.Event(RowCellClick,gsgcDrops_RowCellClick)
+Gui.FormNestHistory.gsgcPartSeparation.Create(GsGridControl)
+Gui.FormNestHistory.gsgcPartSeparation.Size(15210,8490)
+Gui.FormNestHistory.gsgcPartSeparation.Position(-15,-15)
+Gui.FormNestHistory.gsgcPartSeparation.Parent("tabNests",4)
+Gui.FormNestHistory.gsgcPartSeparation.Event(RowCellClick,gsgcPartSeparation_RowCellClick)
+Gui.FormNestHistory.cmdRefresh.Create(Button)
+Gui.FormNestHistory.cmdRefresh.Size(855,375)
+Gui.FormNestHistory.cmdRefresh.Position(14355,60)
+Gui.FormNestHistory.cmdRefresh.Anchor(9)
+Gui.FormNestHistory.cmdRefresh.Caption("Refresh")
+Gui.FormNestHistory.cmdRefresh.Event(Click,cmdRefresh_Click)
+Gui.FormNestHistory.lblLink.Create(Label,"***Link is Open***",False,1395,255,1,7395,180,True,0,"Arial",8,-2147483633,0)
+Gui.FormNestHistory.lblLink.ForeColor(255)
+Gui.FormNestHistory.lblLink.Anchor(9)
+Gui.FormNestHistory.lblStartDate.Create(Label,"Start Date",True,870,255,0,9150,180,True,0,"Arial",8,-2147483633,0)
+Gui.FormNestHistory.lblStartDate.Anchor(9)
+Gui.FormNestHistory.lblStartDate2.Create(Label,"End Date",True,765,255,0,11775,180,True,0,"Arial",8,-2147483633,0)
+Gui.FormNestHistory.lblStartDate2.Anchor(9)
+Gui.FormNestHistory.dtpStart.Create(DatePicker)
+Gui.FormNestHistory.dtpStart.Size(1725,285)
+Gui.FormNestHistory.dtpStart.Position(10005,90)
+Gui.FormNestHistory.dtpStart.Anchor(9)
+Gui.FormNestHistory.dtpEnd.Create(DatePicker)
+Gui.FormNestHistory.dtpEnd.Size(1725,285)
+Gui.FormNestHistory.dtpEnd.Position(12570,90)
+Gui.FormNestHistory.dtpEnd.Anchor(9)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.External.Include.Library("GCG_4980_SharedFunctions.lib")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'GCG_4980_NestHistoryDashboard.g2u
+'Trey S
+'January 6th, 2020
+'Part of the standard nesting interface
+'This will be a dashboard for viewing previous nest records
+
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.CallSub(SetIcon)
+F.Intrinsic.Control.CallSub(SetContextMenu)
+
+F.Intrinsic.Control.CallSub(LoadBlankDataTables)
+F.Intrinsic.Control.CallSub(LoadNestGrid)
+
+F.Intrinsic.Control.CallSub(LoadWorkOrderGrid, "GridView", "gvNestWorkOrders", "GridControl", "gsgcNestHistory")
+F.Intrinsic.Control.CallSub(LoadWorkOrderGrid, "GridView", "gvWorkOrders", "GridControl", "gsgcWorkOrders")
+F.Intrinsic.Control.CallSub(LoadDropGrid, "GridView", "gvNestDrops", "GridControl", "gsgcNestHistory")
+F.Intrinsic.Control.CallSub(LoadDropGrid, "GridView", "gvDrops", "GridControl", "gsgcDrops")
+F.Intrinsic.Control.CallSub(LoadIssueGrid, "GridView", "gvNestIssues", "GridControl", "gsgcNestHistory")
+F.Intrinsic.Control.CallSub(LoadIssueGrid, "GridView", "gvIssues", "GridControl", "gsgcIssues")
+
+F.Intrinsic.Control.CallSub(LoadBlankPartSeparationDataTable)
+F.Intrinsic.Control.CallSub(LoadPartSeparationGrid)
+
+F.Intrinsic.Control.CallSub(LoadDefaultDates)
+F.Intrinsic.Control.CallSub(cmdRefresh_Click)
+
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNests", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNestWorkOrders", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNestDrops", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNestIssues", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcWorkOrders", "GridView", "gvWorkOrders", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcDrops", "GridView", "gvDrops", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcIssues", "GridView", "gvIssues", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Deserialize, "Form", "FormNestHistory", "GridControl", "gsgcPartSeparation", "GridView", "gvPartSeparation", "REGID", 4980)
+
+GUI.FormNestHistory.tabNests.SetTab(0)
+GUI.FormNestHistory..Show
+GUI.FormNestHistory..SetFocus
+F.Intrinsic.Control.CallSub(SetTabAnchors)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.LoadDefaultDates.Start
+F.Intrinsic.Control.Try
+
+V.Local.dStart.Declare(Date)
+
+'default to a month before today
+F.Intrinsic.Date.DateAdd("M", -1, V.Ambient.Date, V.Local.dStart)
+GUI.FormNestHistory.dtpStart.Value(V.Local.dStart)
+GUI.FormNestHistory.dtpEnd.Value(V.Ambient.Date)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadDefaultDates.End
+
+Program.Sub.SetTabAnchors.Start
+F.Intrinsic.Control.Try
+
+Gui.FormNestHistory.gsgcDrops.Anchor(15)
+Gui.FormNestHistory.gsgcIssues.Anchor(15)
+Gui.FormNestHistory.gsgcWorkOrders.Anchor(15)
+Gui.FormNestHistory.gsgcNestHistory.Anchor(15)
+Gui.FormNestHistory.gsgcPartSeparation.Anchor(15)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.SetTabAnchors.End
+
+Program.Sub.FormNestHistory_UnLoad.Start
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNests", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNestWorkOrders", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNestDrops", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNestIssues", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcWorkOrders", "GridView", "gvWorkOrders", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcDrops", "GridView", "gvDrops", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcIssues", "GridView", "gvIssues", "REGID", 4980)
+F.Intrinsic.Control.CallSub(Serialize, "Form", "FormNestHistory", "GridControl", "gsgcPartSeparation", "GridView", "gvPartSeparation", "REGID", 4980)
+
+F.Intrinsic.Control.CallSub(Connection, "CONNECT", False)
+
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.FormNestHistory_UnLoad.End
+
+Program.Sub.SetContextMenu.Start
+F.Intrinsic.Control.Try
+
+GUI.FormNestHistory..ContextMenuCreate("ctxNestHistory")
+
+GUI.FormNestHistory..ContextMenuAddItem("ctxNestHistory", "Reset", 0, "Reset Formatting")
+GUI.FormNestHistory..ContextMenuSetItemEventHandler("ctxNestHistory", "Reset", "ContextReset")
+
+GUI.FormNestHistory..ContextMenuAddItem("ctxNestHistory", "Export", 0, "Export")
+GUI.FormNestHistory..ContextMenuSetItemEventHandler("ctxNestHistory", "Export", "ContextExport")
+
+GUI.FormNestHistory.gsgcNestHistory.ContextMenuAttach("ctxNestHistory")
+GUI.FormNestHistory.gsgcWorkOrders.ContextMenuAttach("ctxNestHistory")
+GUI.FormNestHistory.gsgcDrops.ContextMenuAttach("ctxNestHistory")
+GUI.FormNestHistory.gsgcIssues.ContextMenuAttach("ctxNestHistory")
+GUI.FormNestHistory.gsgcPartSeparation.ContextMenuAttach("ctxNestHistory")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.SetContextMenu.End
+
+Program.Sub.ContextReset.Start
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.CallSub(GetCurrentGridView)
+
+GUI.FormNestHistory.tabNests.Enabled(False)
+
+GUI.FormNestHistory.[V.Args.GridControl].Visible(False)
+GUI.FormNestHistory.[V.Args.GridControl].SuspendLayout
+
+F.Intrinsic.Control.If(V.Args.GridControl, =, "gsgcNestHistory")
+	F.Intrinsic.Control.CallSub(ResetSerialization, "GridView", "gvNests", "REGID", 4980)
+	F.Intrinsic.Control.CallSub(ResetSerialization, "GridView", "gvNestWorkOrders", "REGID", 4980)
+	F.Intrinsic.Control.CallSub(ResetSerialization, "GridView", "gvNestIssues", "REGID", 4980)
+	F.Intrinsic.Control.CallSub(ResetSerialization, "GridView", "gvNestDrops", "REGID", 4980)
+	F.Intrinsic.Control.CallSub(ResetSerialization, "GridView", "gvPartSeparation", "REGID", 4980)
+	
+	F.Intrinsic.Control.CallSub(LoadNestGrid)
+	F.Intrinsic.Control.CallSub(LoadWorkOrderGrid, "GridView", "gvNestWorkOrders", "GridControl", "gsgcNestHistory")
+	F.Intrinsic.Control.CallSub(LoadDropGrid, "GridView", "gvNestDrops", "GridControl", "gsgcNestHistory")
+	F.Intrinsic.Control.CallSub(LoadIssueGrid, "GridView", "gvNestIssues", "GridControl", "gsgcNestHistory")
+	F.Intrinsic.Control.CallSub(LoadPartSeparationGrid)
+	
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.CallSub(ResetSerialization, "GridView", V.Args.GridView, "REGID", 4980)
+	F.Intrinsic.Control.CallSub(V.Args.GridLoadSubroutine, "GridView", V.Args.GridView, "GridControl", V.Args.GridControl)
+F.Intrinsic.Control.EndIf
+
+GUI.FormNestHistory.[V.Args.GridControl].ResumeLayout
+GUI.FormNestHistory.[V.Args.GridControl].Visible(True)
+
+GUI.FormNestHistory.tabNests.Enabled(True)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.ContextReset.End
+
+Program.Sub.ContextExport.Start
+F.Intrinsic.Control.Try
+
+V.Local.sName.Declare(String)
+
+F.Intrinsic.Control.CallSub(GetCurrentGridView)
+F.Intrinsic.String.Build("NestHistory{0}", V.Args.GridView, V.Local.sName)
+F.Intrinsic.String.Replace(V.Local.sName, "gv", "", V.Local.sName)
+F.Intrinsic.Control.CallSub(Export, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "FileName", V.Local.sName)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.ContextExport.End
+
+Program.Sub.GetCurrentGridView.Start
+F.Intrinsic.Control.Try
+
+V.Local.sGridControl.Declare(String)
+V.Local.sGridView.Declare(String)
+V.Local.sGridLoadSubroutine.Declare(String)
+
+F.Intrinsic.Control.SelectCase(V.Screen.FormNestHistory!tabNests.Tab)
+	F.Intrinsic.Control.Case(0)
+		V.Local.sGridControl.Set("gsgcNestHistory")
+		V.Local.sGridView.Set("gvNests")
+		V.Local.sGridLoadSubroutine.Set("LoadNestGrid")
+		
+	F.Intrinsic.Control.Case(1)
+		V.Local.sGridControl.Set("gsgcWorkOrders")
+		V.Local.sGridView.Set("gvWorkOrders")
+		V.Local.sGridLoadSubroutine.Set("LoadWorkOrderGrid")
+		
+	F.Intrinsic.Control.Case(2)
+		V.Local.sGridControl.Set("gsgcIssues")
+		V.Local.sGridView.Set("gvIssues")
+		V.Local.sGridLoadSubroutine.Set("LoadIssueGrid")
+		
+	F.Intrinsic.Control.Case(3)
+		V.Local.sGridControl.Set("gsgcDrops")
+		V.Local.sGridView.Set("gvDrops")
+		V.Local.sGridLoadSubroutine.Set("LoadDropGrid")
+	
+	F.Intrinsic.Control.Case(4)
+		V.Local.sGridControl.Set("gsgcPartSeparation")
+		V.Local.sGridView.Set("gvPartSeparation")
+		V.Local.sGridLoadSubroutine.Set("LoadPartSeparationGrid")
+		
+F.Intrinsic.Control.EndSelect
+
+F.Intrinsic.Variable.AddRV("GridControl", V.Local.sGridControl)
+F.Intrinsic.Variable.AddRV("GridView", V.Local.sGridView)
+F.Intrinsic.Variable.AddRV("GridLoadSubroutine", V.Local.sGridLoadSubroutine)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.GetCurrentGridView.End
+
+Program.Sub.cmdRefresh_Click.Start
+F.Intrinsic.Control.Try
+
+GUI.FormNestHistory.tabNests.Enabled(False)
+
+GUI.FormNestHistory.gsgcNestHistory.SuspendLayout
+GUI.FormNestHistory.gsgcWorkOrders.SuspendLayout
+GUI.FormNestHistory.gsgcDrops.SuspendLayout
+GUI.FormNestHistory.gsgcIssues.SuspendLayout
+GUI.FormNestHistory.gsgcPartSeparation.SuspendLayout
+
+F.Intrinsic.Control.CallSub(LoadData)
+F.Intrinsic.Control.CallSub(LoadPartSeparationData)
+
+GUI.FormNestHistory.gsgcPartSeparation.ResumeLayout
+GUI.FormNestHistory.gsgcIssues.ResumeLayout
+GUI.FormNestHistory.gsgcDrops.ResumeLayout
+GUI.FormNestHistory.gsgcWorkOrders.ResumeLayout
+GUI.FormNestHistory.gsgcNestHistory.ResumeLayout
+
+GUI.FormNestHistory.tabNests.Enabled(True)
+GUI.FormNestHistory..SetFocus
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdRefresh_Click.End
+
+Program.Sub.LoadData.Start
+F.Intrinsic.Control.Try
+
+V.Local.sSQL.Declare(String)
+V.Local.sFilter.Declare(String)
+V.Local.dStart.Declare(Date)
+V.Local.dEnd.Declare(Date)
+
+F.Data.DataTable.DeleteRow("dtNests$dtIssues")
+F.Data.DataTable.DeleteRow("dtNests$dtDrops")
+F.Data.DataTable.DeleteRow("dtNests$dtWorkOrders")
+F.Data.DataTable.DeleteRow("dtNests")
+
+V.Local.dStart.Set(V.Screen.FormNestHistory!dtpStart.Value)
+V.Local.dEnd.Set(V.Screen.FormNestHistory!dtpEnd.Value)
+F.Intrinsic.Date.DateAdd("D", 1, V.Local.dEnd, V.Local.dEnd)
+
+F.Intrinsic.String.Build("where POST_TIMESTAMP between '{0}' and '{1}'", V.Local.dStart.PervasiveDate, V.Local.dEnd.PervasiveDate, V.Local.sFilter)
+
+F.Intrinsic.Control.CallSub(Connection, "CONNECT", True)
+F.Intrinsic.String.Build("select RTRIM(IsNull(NEST_ID, '')) NEST_ID, RTRIM(IsNull(MATERIAL, '')) NEST_MATERIAL, RTRIM(IsNull(LOCATION, '')) NEST_LOCATION, RTRIM(IsNull(UM, '')) UM, SUM(TOTAL_MATERIAL) TOTAL_MATERIAL, SUM(ISSUED) MATERIAL_USED, RTRIM(IsNull(FLEX_SCHEDULE, '')) FLEX_SCHEDULE, RTRIM(IsNull(NEXT_FLEX_SCHEDULE, '')) NEXT_FLEX_SCHEDULE, RTRIM(IsNull(PROFILE, '')) PROFILE, POST_TIMESTAMP, IsNull(SHEET_AREA, 0) SHEET_AREA, IsNull(SHEET_WEIGHT, 0) SHEET_WEIGHT from GCG_4980_MAT_HIST {0} group by NEST_ID, POST_TIMESTAMP, MATERIAL, LOCATION, UM, FLEX_SCHEDULE, NEXT_FLEX_SCHEDULE, PROFILE, SHEET_AREA, SHEET_WEIGHT order by POST_TIMESTAMP desc", V.Local.sFilter, V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtNestsTemp", "Con", V.Local.sSQL)
+F.Data.DataTable.AddExpressionColumn("dtNestsTemp", "KEY", "String", "Trim([NEST_ID]) + Convert([POST_TIMESTAMP], 'System.String')")
+
+F.Intrinsic.String.Build("select distinct NEST_ID from GCG_4980_MAT_HIST where POST_TIMESTAMP between '{0}' and '{1}'", V.Local.dStart.PervasiveDate, V.Local.dEnd.PervasiveDate, V.Local.sFilter)
+F.Intrinsic.String.Build("select RTRIM(NEST_ID) NEST_ID, RTRIM(EMPLOYEE) EMPLOYEE, RTRIM(START_TIME) START_TIME, RTRIM(END_TIME) END_TIME, RTRIM(POST_DATE) POST_DATE, RTRIM(POST_TIME) POST_TIME, TOTAL_TIME, TOTAL_MATERIAL, RTRIM(JOB) WO_JOB, RTRIM(SUFFIX) WO_SUFFIX, RTRIM(LABOR_SEQUENCE) LABOR_SEQUENCE, GSS_ISSUE, GOOD_PIECES, BAD_PIECES, RTRIM(WORKCENTER) WORKCENTER, INDIRECT, POST_TIMESTAMP, RTRIM(PROFILE) PROFILE, RUN_COUNT, RTRIM(FILE) FILE, RTRIM(SCRAP_CODE) SCRAP_CODE, PART_AREA, PART_WEIGHT from GCG_4980_WO_HIST where NEST_ID in ({0}) order by POST_TIMESTAMP desc", V.Local.sFilter, V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtNests$dtWorkOrdersTemp", "Con", V.Local.sSQL)
+F.Data.DataTable.AddExpressionColumn("dtNests$dtWorkOrdersTemp", "KEY", "String", "Trim([NEST_ID]) + Convert([POST_TIMESTAMP], 'System.String')")
+
+F.Intrinsic.String.Build("select RTRIM(NEST_ID) NEST_ID, RTRIM(MATERIAL) DROP_MATERIAL, RTRIM(LOCATION) DROP_LOCATION, TOTAL_MATERIAL, DROP_ISSUE, RTRIM(LOT) LOT, RTRIM(BIN) BIN, RTRIM(HEAT) HEAT, RTRIM(SERIAL) SERIAL, RTRIM(SIZE) SIZE, RTRIM(PROFILE) PROFILE, POST_TIMESTAMP, RTRIM(DROP_ID) DROP_ID, DROP_AREA, DROP_WEIGHT from GCG_4980_DROP_HIST where NEST_ID in ({0}) order by POST_TIMESTAMP desc", V.Local.sFilter, V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtNests$dtDropsTemp", "Con", V.Local.sSQL)
+F.Data.DataTable.AddExpressionColumn("dtNests$dtDropsTemp", "KEY", "String", "Trim([NEST_ID]) + Convert([POST_TIMESTAMP], 'System.String')")
+
+F.Intrinsic.String.Build("select RTRIM(NEST_ID) NEST_ID, POST_TIMESTAMP, RTRIM(JOB) ISSUE_JOB, RTRIM(SUFFIX) ISSUE_SUFFIX, RTRIM(MATERIAL_SEQUENCE) MATERIAL_SEQUENCE, RTRIM(MATERIAL) ISSUE_MATERIAL, RTRIM(LOCATION) ISSUE_LOCATION, RTRIM(LOT) LOT, RTRIM(BIN) BIN, RTRIM(HEAT) HEAT, RTRIM(SERIAL) SERIAL, QUANTITY from GCG_4980_ITEM_HIST where NEST_ID in ({0}) order by POST_TIMESTAMP desc", V.Local.sFilter, V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtNests$dtIssuesTemp", "Con", V.Local.sSQL)
+F.Data.DataTable.AddExpressionColumn("dtNests$dtIssuesTemp", "KEY", "String", "Trim([NEST_ID]) + Convert([POST_TIMESTAMP], 'System.String')")
+
+'fill employee name
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(EMPLOYEE), RTRIM(NAME) from V_EMPLOYEE_MSTR")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtNests$dtWorkOrdersTemp", "EMPLOYEE_NAME", "String", "")
+F.Data.DataTable.FillFromDictionary("dtNests$dtWorkOrdersTemp", "dictTemp", "EMPLOYEE", "EMPLOYEE_NAME")
+F.Data.Dictionary.Close("dictTemp")
+
+'fill part description
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(PART) + RTRIM(LOCATION), RTRIM(DESCRIPTION) from V_INVENTORY_MSTR")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtNestsTemp", "DESCRIPTION", "String", "")
+F.Data.DataTable.AddExpressionColumn("dtNestsTemp", "PARTLOC", "String", "Trim([NEST_MATERIAL]) + Trim([NEST_LOCATION])")
+F.Data.DataTable.FillFromDictionary("dtNestsTemp", "dictTemp", "PARTLOC", "DESCRIPTION")
+F.Data.Dictionary.Close("dictTemp")
+F.Data.DataTable.RemoveColumn("dtNestsTemp", "PARTLOC")
+
+'fill job description
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(JOB) + RTRIM(SUFFIX) + RTRIM(SEQ), RTRIM(DESCRIPTION) from V_JOB_OPERATIONS where LMO = 'L' or LMO = 'M'")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtNests$dtWorkOrdersTemp", "JOB_DESCRIPTION", "String", "")
+F.Data.DataTable.AddColumn("dtNests$dtIssuesTemp", "JOB_DESCRIPTION", "String", "")
+F.Data.DataTable.AddExpressionColumn("dtNests$dtWorkOrdersTemp", "JSS", "String", "Trim([WO_JOB]) + Trim([WO_SUFFIX]) + Trim([LABOR_SEQUENCE])")
+F.Data.DataTable.AddExpressionColumn("dtNests$dtIssuesTemp", "JSS", "String", "Trim([ISSUE_JOB]) + Trim([ISSUE_SUFFIX]) + Trim([MATERIAL_SEQUENCE])")
+F.Data.DataTable.FillFromDictionary("dtNests$dtWorkOrdersTemp", "dictTemp", "JSS", "JOB_DESCRIPTION")
+F.Data.DataTable.FillFromDictionary("dtNests$dtIssuesTemp", "dictTemp", "JSS", "JOB_DESCRIPTION")
+F.Data.DataTable.RemoveColumn("dtNests$dtWorkOrdersTemp", "JSS")
+F.Data.DataTable.RemoveColumn("dtNests$dtIssuesTemp", "JSS")
+F.Data.Dictionary.Close("dictTemp")
+
+'fill scrap reason
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(CODE), RTRIM(DESCR) from V_REJECTED_CODE")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtNests$dtWorkOrdersTemp", "SCRAP_CODE_DESCRIPTION", "String", "")
+F.Data.DataTable.FillFromDictionary("dtNests$dtWorkOrdersTemp", "dictTemp", "SCRAP_CODE", "SCRAP_CODE_DESCRIPTION")
+F.Data.Dictionary.Close("dictTemp")
+
+F.Intrinsic.Control.CallSub(Connection, "CONNECT", False)
+
+F.Data.DataView.Create("dtNestsTemp", "dvNestsTemp", 22)
+F.Data.DataView.ToString("dtNestsTemp", "dvNestsTemp", "KEY", "***NODELIMITER***", "','", V.Local.sFilter)
+F.Data.DataView.Close("dtNestsTemp", "dvNestsTemp")
+F.Intrinsic.String.Build("[KEY] in ('{0}')", V.Local.sFilter, V.Local.sFilter)
+
+F.Data.DataView.Create("dtNests$dtWorkOrdersTemp", "dvTemp", 22, V.Local.sFilter, "")
+F.Data.DataView.ToDataTable("dtNests", "dvTemp", "dtNests$dtWorkOrdersTempFiltered")
+F.Data.DataView.Close("dtNests", "dvTemp")
+F.Data.DataTable.Close("dtNests$dtWorkOrdersTemp")
+
+F.Data.DataView.Create("dtNests$dtDropsTemp", "dvTemp", 22, V.Local.sFilter, "")
+F.Data.DataView.ToDataTable("dtNests", "dvTemp", "dtNests$dtDropsTempFiltered")
+F.Data.DataView.Close("dtNests", "dvTemp")
+F.Data.DataTable.Close("dtNests$dtDropsTemp")
+
+F.Data.DataView.Create("dtNests$dtIssuesTemp", "dvTemp", 22, V.Local.sFilter, "")
+F.Data.DataView.ToDataTable("dtNests", "dvTemp", "dtNests$dtIssuesTempFiltered")
+F.Data.DataView.Close("dtNests", "dvTemp")
+F.Data.DataTable.Close("dtNests$dtIssuesTemp")
+
+F.Data.DataTable.RemoveColumn("dtNestsTemp", "KEY")
+F.Data.DataTable.RemoveColumn("dtNests$dtWorkOrdersTempFiltered", "KEY")
+F.Data.DataTable.RemoveColumn("dtNests$dtDropsTempFiltered", "KEY")
+F.Data.DataTable.RemoveColumn("dtNests$dtIssuesTempFiltered", "KEY")
+
+F.Data.DataTable.Merge("dtNestsTemp", "dtNests", False, 2)
+F.Data.DataTable.Merge("dtNests$dtWorkOrdersTempFiltered", "dtNests$dtWorkOrders", False, 2)
+F.Data.DataTable.Merge("dtNests$dtDropsTempFiltered", "dtNests$dtDrops", False, 2)
+F.Data.DataTable.Merge("dtNests$dtIssuesTempFiltered", "dtNests$dtIssues", False, 2)
+
+F.Data.DataTable.Close("dtNestsTemp")
+F.Data.DataTable.Close("dtNests$dtWorkOrdersTempFiltered")
+F.Data.DataTable.Close("dtNests$dtDropsTempFiltered")
+F.Data.DataTable.Close("dtNests$dtIssuesTempFiltered")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadData.End
+
+Program.Sub.LoadNestGrid.Start
+F.Intrinsic.Control.Try
+
+V.Local.iIndex.Declare(Long, -1)
+
+GUI.FormNestHistory.gsgcNestHistory.AddGridviewFromDatatable("gvNests", "dtNests")
+
+GUI.FormNestHistory.gsgcNestHistory.SetGridViewProperty("gvNests", "OptionsDetailShowDetailTabs", True)
+GUI.FormNestHistory.gsgcNestHistory.SetGridViewProperty("gvNests", "ReadOnly", True)
+GUI.FormNestHistory.gsgcNestHistory.SetGridViewProperty("gvNests", "Editable", False)
+GUI.FormNestHistory.gsgcNestHistory.SetGridViewProperty("gvNests", "OptionsViewColumnAutoWidth", False)
+GUI.FormNestHistory.gsgcNestHistory.SetGridViewProperty("gvNests", "EnableAppearanceOddRow", True)
+
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "PROFILE", "Visible", False)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEXT_FLEX_SCHEDULE", "Visible", False)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "TOTAL_MATERIAL", "Visible", False)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "MATERIAL_USED", "Visible", False)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_AREA", "Visible", False)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_WEIGHT", "Visible", False)
+
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNests", "DataTable", "dtNests", "Property", "HeaderFontBold", "Value", True)
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNests", "DataTable", "dtNests", "Property", "HeaderHAlignment", "Value", "Center")
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", "gsgcNestHistory", "GridView", "gvNests", "DataTable", "dtNests", "Property", "CellHAlignment", "Value", "Center")
+
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_ID", "Caption", "Nest")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_MATERIAL", "Caption", "Material")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_LOCATION", "Caption", "Loc")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "UM", "Caption", "UM")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "TOTAL_MATERIAL", "Caption", "Total Material (SI)")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "ISSUED", "Caption", "Issued")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "FLEX_SCHEDULE", "Caption", "Flex Sched")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEXT_FLEX_SCHEDULE", "Caption", "Flex Sched Next WC")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "POST_TIMESTAMP", "Caption", "Posted At")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "DESCRIPTION", "Caption", "Material Description")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "PROFILE", "Caption", "Profile")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "MATERIAL_USED", "Caption", "Material Used")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_AREA", "Caption", "Sheet Area")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_WEIGHT", "Caption", "Sheet Weight")
+
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_ID", "MinWidth", 90)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_MATERIAL", "MinWidth", 180)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_LOCATION", "MinWidth", 40)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "UM", "MinWidth", 40)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "TOTAL_MATERIAL", "MinWidth", 70)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "ISSUED", "MinWidth", 70)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "FLEX_SCHEDULE", "MinWidth", 70)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEXT_FLEX_SCHEDULE", "MinWidth", 70)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "POST_TIMESTAMP", "MinWidth", 140)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "DESCRIPTION", "MinWidth", 160)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "PROFILE", "MinWidth", 50)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "MATERIAL_USED", "MinWidth", 40)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_AREA", "MinWidth", 40)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_WEIGHT", "MinWidth", 40)
+
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_MATERIAL", "CellForeColor", "Blue")
+
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_ID", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "POST_TIMESTAMP", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_MATERIAL", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "NEST_LOCATION", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "UM", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "DESCRIPTION", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "ISSUED", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "FLEX_SCHEDULE", "VisibleIndex", V.Local.iIndex.++)
+
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "ISSUED", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "TOTAL_MATERIAL", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "MATERIAL_USED", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_AREA", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.gsgcNestHistory.SetColumnProperty("gvNests", "SHEET_WEIGHT", "DisplayCustomNumeric", "#,##0.00")
+
+GUI.FormNestHistory.gsgcNestHistory.MainView("gvNests")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadNestGrid.End
+
+Program.Sub.LoadWorkOrderGrid.Start
+F.Intrinsic.Control.Try
+
+V.Local.iIndex.Declare(Long, -1)
+
+GUI.FormNestHistory.[V.Args.GridControl].AddGridviewFromDataview(V.Args.GridView, "dtNests", "dvWorkOrders")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "ReadOnly", True)
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "Editable", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "OptionsViewColumnAutoWidth", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "EnableAppearanceOddRow", False)
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "START_TIME", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "END_TIME", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIME", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_DATE", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "INDIRECT", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PROFILE", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "RUN_COUNT", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "FILE", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SCRAP_CODE", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SCRAP_CODE_DESCRIPTION", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_WEIGHT", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_AREA", "Visible", False)
+
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtWorkOrders", "Property", "HeaderFontBold", "Value", True)
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtWorkOrders", "Property", "HeaderHAlignment", "Value", "Center")
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtWorkOrders", "Property", "CellHAlignment", "Value", "Center")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "Caption", "Nest")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "EMPLOYEE", "Caption", "Employee")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "START_TIME", "Caption", "Start Time")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "END_TIME", "Caption", "End Time")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_DATE", "Caption", "Post Date")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIME", "Caption", "Post Time")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_TIME", "Caption", "Hours")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "Caption", "Total Material")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_JOB", "Caption", "Job")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_SUFFIX", "Caption", "Suffix")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LABOR_SEQUENCE", "Caption", "L. Sequence")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GSS_ISSUE", "Caption", "Issued")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GOOD_PIECES", "Caption", "Good")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BAD_PIECES", "Caption", "Scrap")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WORKCENTER", "Caption", "WC")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "INDIRECT", "Caption", "Indirect")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "Caption", "Posted At")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "EMPLOYEE_NAME", "Caption", "Name")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "JOB_DESCRIPTION", "Caption", "Job Description")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "RUN_COUNT", "Caption", "Run Count")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PROFILE", "Caption", "Profile")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "FILE", "Caption", "File")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SCRAP_CODE", "Caption", "Scrap Code")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SCRAP_CODE_DESCRIPTION", "Caption", "Scrap Code Description")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_WEIGHT", "Caption", "Part Weight")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_AREA", "Caption", "Part Area")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "EMPLOYEE", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "START_TIME", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "END_TIME", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_DATE", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIME", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_TIME", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_JOB", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_SUFFIX", "MinWidth", 60)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LABOR_SEQUENCE", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GSS_ISSUE", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GOOD_PIECES", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BAD_PIECES", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WORKCENTER", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "INDIRECT", "MinWidth", 40)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "EMPLOYEE_NAME", "MinWidth", 90)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "JOB_DESCRIPTION", "MinWidth", 160)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "JOB_DESCRIPTION", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PROFILE", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "FILE", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SCRAP_CODE", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SCRAP_CODE_DESCRIPTION", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_WEIGHT", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_AREA", "MinWidth", 70)
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_JOB", "CellForeColor", "Blue")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_SUFFIX", "CellForeColor", "Blue")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LABOR_SEQUENCE", "CellForeColor", "Blue")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_TIME", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_WEIGHT", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PART_AREA", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GSS_ISSUE", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GOOD_PIECES", "DisplayCustomNumeric", "#,##0")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BAD_PIECES", "DisplayCustomNumeric", "#,##0")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "RUN_COUNT", "DisplayCustomNumeric", "0")
+
+F.Intrinsic.Control.SelectCase(V.Args.GridView)
+	F.Intrinsic.Control.Case("gvWorkOrders")
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "VisibleIndex", V.Local.iIndex.++)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "VisibleIndex", V.Local.iIndex.++)
+		
+		GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "EnableAppearanceOddRow", True)
+		
+		GUI.FormNestHistory.[V.Args.GridControl].MainView(V.Args.GridView)
+		
+	F.Intrinsic.Control.Case("gvNestWorkOrders")
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "Visible", False)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "Visible", False)
+
+		GUI.FormNestHistory.[V.Args.GridControl].AddSummaryItem(V.Args.GridView, "TOTAL_TIME", "WO_TOTAL_TIME_SUM", "SUM", "Hours: ", "", "#,##0.00")
+		GUI.FormNestHistory.[V.Args.GridControl].AddSummaryItem(V.Args.GridView, "GSS_ISSUE", "WO_GSS_ISSUE_SUM", "SUM", "Total: ", "", "#,##0.00")
+		GUI.FormNestHistory.[V.Args.GridControl].AddSummaryItem(V.Args.GridView, "GOOD_PIECES", "WO_GOOD_PIECES_SUM", "SUM", "Good: ", "", "#,##0")
+		GUI.FormNestHistory.[V.Args.GridControl].AddSummaryItem(V.Args.GridView, "BAD_PIECES", "WO_BAD_PIECES_SUM", "SUM", "Scrap: ", "", "#,##0")
+		
+F.Intrinsic.Control.EndSelect
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_JOB", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WO_SUFFIX", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LABOR_SEQUENCE", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "JOB_DESCRIPTION", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "EMPLOYEE", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "EMPLOYEE_NAME", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_TIME", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "WORKCENTER", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GOOD_PIECES", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BAD_PIECES", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "GSS_ISSUE", "VisibleIndex", V.Local.iIndex.++)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadWorkOrderGrid.End
+
+Program.Sub.LoadDropGrid.Start
+F.Intrinsic.Control.Try
+
+V.Local.iIndex.Declare(Long, -1)
+
+GUI.FormNestHistory.[V.Args.GridControl].AddGridviewFromDataview(V.Args.GridView, "dtNests", "dvDrops")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "ReadOnly", True)
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "Editable", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "OptionsViewColumnAutoWidth", False)
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PROFILE", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_AREA", "Visible", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_WEIGHT", "Visible", False)
+
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtDrops", "Property", "HeaderFontBold", "Value", True)
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtDrops", "Property", "HeaderHAlignment", "Value", "Center")
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtDrops", "Property", "CellHAlignment", "Value", "Center")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "Caption", "Nest")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_MATERIAL", "Caption", "Material")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_LOCATION", "Caption", "Loc")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "Caption", "Total Material")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_ISSUE", "Caption", "Issued")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LOT", "Caption", "Lot")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BIN", "Caption", "Bin")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "HEAT", "Caption", "Heat")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SERIAL", "Caption", "Serial")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SIZE", "Caption", "Size")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PROFILE", "Caption", "Profile")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "Caption", "Posted At")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_ID", "Caption", "Drop ID")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_AREA", "Caption", "Drop Area")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_WEIGHT", "Caption", "Drop Weight")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_MATERIAL", "MinWidth", 160)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_LOCATION", "MinWidth", 40)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_ISSUE", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LOT", "MinWidth", 90)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BIN", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "HEAT", "MinWidth", 90)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SERIAL", "MinWidth", 160)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SIZE", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "PROFILE", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_ID", "MinWidth", 160)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_AREA", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_WEIGHT", "MinWidth", 80)
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "TOTAL_MATERIAL", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_ISSUE", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_AREA", "DisplayCustomNumeric", "#,##0.00")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_WEIGHT", "DisplayCustomNumeric", "#,##0.00")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_MATERIAL", "CellForeColor", "Blue")
+
+F.Intrinsic.Control.SelectCase(V.Args.GridView)
+	F.Intrinsic.Control.Case("gvDrops")
+		GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "EnableAppearanceOddRow", True)
+		
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "VisibleIndex", V.Local.iIndex.++)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "VisibleIndex", V.Local.iIndex.++)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_MATERIAL", "VisibleIndex", V.Local.iIndex.++)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_LOCATION", "VisibleIndex", V.Local.iIndex.++)
+		
+		GUI.FormNestHistory.[V.Args.GridControl].MainView(V.Args.GridView)
+	F.Intrinsic.Control.Case("gvNestDrops")
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "Visible", False)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "Visible", False)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_MATERIAL", "Visible", False)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_LOCATION", "Visible", False)
+
+		GUI.FormNestHistory.[V.Args.GridControl].AddSummaryItem(V.Args.GridView, "DROP_ISSUE", "DROP_DROP_ISSUE_SUM", "SUM", "Total: ", "", "#,##0.00")
+F.Intrinsic.Control.EndSelect
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_ID", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SERIAL", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LOT", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BIN", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "HEAT", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SIZE", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "DROP_ISSUE", "VisibleIndex", V.Local.iIndex.++)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadDropGrid.End
+
+Program.Sub.LoadIssueGrid.Start
+F.Intrinsic.Control.Try
+
+V.Local.iIndex.Declare(Long, -1)
+
+GUI.FormNestHistory.[V.Args.GridControl].AddGridviewFromDataview(V.Args.GridView, "dtNests", "dvIssues")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "ReadOnly", True)
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "Editable", False)
+GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "OptionsViewColumnAutoWidth", False)
+
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtIssues", "Property", "HeaderFontBold", "Value", True)
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtIssues", "Property", "HeaderHAlignment", "Value", "Center")
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", V.Args.GridControl, "GridView", V.Args.GridView, "DataTable", "dtNests$dtIssues", "Property", "CellHAlignment", "Value", "Center")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "Caption", "Nest")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "Caption", "Posted At")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_JOB", "Caption", "Job")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_SUFFIX", "Caption", "Suffix")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "MATERIAL_SEQUENCE", "Caption", "M. Sequence")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_MATERIAL", "Caption", "Material")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_LOCATION", "Caption", "Loc")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LOT", "Caption", "Lot")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BIN", "Caption", "Bin")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "HEAT", "Caption", "Heat")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SERIAL", "Caption", "Serial")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "QUANTITY", "Caption", "Issued")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "JOB_DESCRIPTION", "Caption", "Description")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_JOB", "MinWidth", 70)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_SUFFIX", "MinWidth", 50)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "MATERIAL_SEQUENCE", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_MATERIAL", "MinWidth", 160)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_LOCATION", "MinWidth", 40)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LOT", "MinWidth", 90)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BIN", "MinWidth", 60)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "HEAT", "MinWidth", 90)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SERIAL", "MinWidth", 140)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "QUANTITY", "MinWidth", 80)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "JOB_DESCRIPTION", "MinWidth", 120)
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_JOB", "CellForeColor", "Blue")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_SUFFIX", "CellForeColor", "Blue")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "MATERIAL_SEQUENCE", "CellForeColor", "Blue")
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_MATERIAL", "CellForeColor", "Blue")
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "QUANTITY", "DisplayCustomNumeric", "#,##0.00")
+
+F.Intrinsic.Control.SelectCase(V.Args.GridView)
+	F.Intrinsic.Control.Case("gvIssues")
+		GUI.FormNestHistory.[V.Args.GridControl].SetGridViewProperty(V.Args.GridView, "EnableAppearanceOddRow", True)
+		
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "VisibleIndex", V.Local.iIndex.++)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "VisibleIndex", V.Local.iIndex.++)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_MATERIAL", "VisibleIndex", V.Local.iIndex.++)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_LOCATION", "VisibleIndex", V.Local.iIndex.++)
+
+		GUI.FormNestHistory.[V.Args.GridControl].MainView(V.Args.GridView)
+		
+	F.Intrinsic.Control.Case("gvNestIssues")
+		GUI.FormNestHistory.[V.Args.GridControl].AddSummaryItem(V.Args.GridView, "QUANTITY", "ISSUE_QUANTITY_SUM", "SUM", "Total: ", "", "#,##0.00")
+		
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "NEST_ID", "Visible", False)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "POST_TIMESTAMP", "Visible", False)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_MATERIAL", "Visible", False)
+		GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_LOCATION", "Visible", False)
+		
+F.Intrinsic.Control.EndSelect
+
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_JOB", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "ISSUE_SUFFIX", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "MATERIAL_SEQUENCE", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "JOB_DESCRIPTION", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "LOT", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "BIN", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "HEAT", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "SERIAL", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.[V.Args.GridControl].SetColumnProperty(V.Args.GridView, "QUANTITY", "VisibleIndex", V.Local.iIndex.++)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadIssueGrid.End
+
+Program.Sub.LoadBlankDataTables.Start
+F.Intrinsic.Control.Try
+
+V.Local.sSQL.Declare(String)
+
+F.Intrinsic.Control.CallSub(Connection, "CONNECT", True)
+
+V.Local.sSQL.Set("select RTRIM(NEST_ID) NEST_ID, RTRIM(MATERIAL) NEST_MATERIAL, RTRIM(LOCATION) NEST_LOCATION, RTRIM(UM) UM, TOTAL_MATERIAL, RTRIM(FLEX_SCHEDULE) FLEX_SCHEDULE, RTRIM(NEXT_FLEX_SCHEDULE) NEXT_FLEX_SCHEDULE, RTRIM(PROFILE) PROFILE, POST_TIMESTAMP, ISSUED MATERIAL_USED, SHEET_AREA, SHEET_WEIGHT from GCG_4980_MAT_HIST where NEST_ID = '' order by POST_TIMESTAMP desc")
+F.Data.DataTable.CreateFromSQL("dtNests", "Con", V.Local.sSQL, True)
+F.Data.DataTable.AddColumn("dtNests", "DESCRIPTION", "String", "")
+F.Data.DataTable.DeleteRow("dtNests")
+F.Data.DataTable.AcceptChanges("dtNests")
+
+V.Local.sSQL.Set("select RTRIM(NEST_ID) NEST_ID, RTRIM(EMPLOYEE) EMPLOYEE, RTRIM(START_TIME) START_TIME, RTRIM(END_TIME) END_TIME, RTRIM(POST_DATE) POST_DATE, RTRIM(POST_TIME) POST_TIME, TOTAL_TIME, TOTAL_MATERIAL, RTRIM(JOB) WO_JOB, RTRIM(SUFFIX) WO_SUFFIX, RTRIM(LABOR_SEQUENCE) LABOR_SEQUENCE, GSS_ISSUE, GOOD_PIECES, BAD_PIECES, RTRIM(WORKCENTER) WORKCENTER, INDIRECT, POST_TIMESTAMP, RTRIM(PROFILE) PROFILE, RUN_COUNT, RTRIM(FILE) FILE, RTRIM(SCRAP_CODE) SCRAP_CODE, PART_WEIGHT, PART_AREA from GCG_4980_WO_HIST where NEST_ID = '' order by POST_TIMESTAMP desc")
+F.Data.DataTable.CreateFromSQL("dtNests$dtWorkOrders", "Con", V.Local.sSQL, True)
+F.Data.DataTable.AddColumn("dtNests$dtWorkOrders", "EMPLOYEE_NAME", "String", "")
+F.Data.DataTable.AddColumn("dtNests$dtWorkOrders", "JOB_DESCRIPTION", "String", "")
+F.Data.DataTable.AddColumn("dtNests$dtWorkOrders", "SCRAP_CODE_DESCRIPTION", "String", "")
+F.Data.DataTable.DeleteRow("dtNests$dtWorkOrders")
+F.Data.DataTable.AcceptChanges("dtNests$dtWorkOrders")
+
+V.Local.sSQL.Set("select RTRIM(NEST_ID) NEST_ID, RTRIM(MATERIAL) DROP_MATERIAL, RTRIM(LOCATION) DROP_LOCATION, TOTAL_MATERIAL, DROP_ISSUE, RTRIM(LOT) LOT, RTRIM(BIN) BIN, RTRIM(HEAT) HEAT, RTRIM(SERIAL) SERIAL, RTRIM(SIZE) SIZE, RTRIM(PROFILE) PROFILE, POST_TIMESTAMP, RTRIM(DROP_ID) DROP_ID, DROP_AREA, DROP_WEIGHT from GCG_4980_DROP_HIST where NEST_ID = '' order by POST_TIMESTAMP desc")
+F.Data.DataTable.CreateFromSQL("dtNests$dtDrops", "Con", V.Local.sSQL, True)
+F.Data.DataTable.DeleteRow("dtNests$dtDrops")
+F.Data.DataTable.AcceptChanges("dtNests$dtDrops")
+
+V.Local.sSQL.Set("select RTRIM(NEST_ID) NEST_ID, POST_TIMESTAMP, RTRIM(JOB) ISSUE_JOB, RTRIM(SUFFIX) ISSUE_SUFFIX, RTRIM(MATERIAL_SEQUENCE) MATERIAL_SEQUENCE, RTRIM(MATERIAL) ISSUE_MATERIAL, RTRIM(LOCATION) ISSUE_LOCATION, RTRIM(LOT) LOT, RTRIM(BIN) BIN, RTRIM(HEAT) HEAT, RTRIM(SERIAL) SERIAL, QUANTITY from GCG_4980_ITEM_HIST where NEST_ID = '' order by POST_TIMESTAMP desc")
+F.Data.DataTable.CreateFromSQL("dtNests$dtIssues", "Con", V.Local.sSQL, True)
+F.Data.DataTable.AddColumn("dtNests$dtIssues", "JOB_DESCRIPTION", "String", "")
+F.Data.DataTable.DeleteRow("dtNests$dtIssues")
+F.Data.DataTable.AcceptChanges("dtNests$dtIssues")
+
+F.Intrinsic.Control.CallSub(Connection, "CONNECT", False)
+
+F.Data.DataTable.AddRelation("dtNests", "NEST_ID*!*POST_TIMESTAMP", "dtNests$dtWorkOrders", "NEST_ID*!*POST_TIMESTAMP", "Jobs")
+F.Data.DataTable.AddRelation("dtNests", "NEST_ID*!*POST_TIMESTAMP", "dtNests$dtDrops", "NEST_ID*!*POST_TIMESTAMP", "Drops")
+F.Data.DataTable.AddRelation("dtNests", "NEST_ID*!*POST_TIMESTAMP", "dtNests$dtIssues", "NEST_ID*!*POST_TIMESTAMP", "Issues")
+
+F.Data.DataTable.AddExpressionColumn("dtNests", "ISSUED", "Float", "IsNull(SUM(Child(Jobs).GSS_ISSUE), 0)")
+
+F.Data.DataView.Create("dtNests$dtWorkOrders", "dvWorkOrders", 22)
+F.Data.DataView.Create("dtNests$dtDrops", "dvDrops", 22)
+F.Data.DataView.Create("dtNests$dtIssues", "dvIssues", 22)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadBlankDataTables.End
+
+Program.Sub.SetGridViewProperty.Start
+F.Intrinsic.Control.Try
+
+V.Local.sForm.Declare(String)
+V.Local.sGridView.Declare(String)
+V.Local.sDataTable.Declare(String)
+V.Local.sProperty.Declare(String)
+V.Local.sValue.Declare(String)
+V.Local.sColumns.Declare(String)
+V.Local.iCounter.Declare(Long)
+V.Local.sGridControl.Declare(String)
+
+V.Local.sForm.Set(V.Args.FORM)
+V.Local.sGridView.Set(V.Args.GRIDVIEW)
+V.Local.sDataTable.Set(V.Args.DATATABLE)
+V.Local.sProperty.Set(V.Args.PROPERTY)
+V.Local.sValue.Set(V.Args.VALUE)
+V.Local.sGridControl.Set(V.Args.GRIDCONTROL)
+
+V.Local.sColumns.Set(V.DataTable.[V.Local.sDataTable].FieldNames)
+F.Intrinsic.String.Split(V.Local.sColumns, "*!*", V.Local.sColumns)
+F.Intrinsic.Control.For(V.Local.iCounter, 0, V.Local.sColumns.UBound, 1)
+	GUI.[V.Local.sForm].[V.Local.sGridControl].SetColumnProperty(V.Local.sGridView, V.Local.sColumns(V.Local.iCounter), V.Local.sProperty, V.Local.sValue)
+F.Intrinsic.Control.Next(V.Local.iCounter)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.SetGridViewProperty.End
+
+Program.Sub.Link.Start
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.BlockEvents
+GUI.FormNestHistory.lblLink.Visible(True)
+F.Global.General.CallWrapperSync(V.Args.CALLWRAPPER, V.Args.PARAMETERS)
+GUI.FormNestHistory.lblLink.Visible(False)
+F.Intrinsic.Control.UnBlockEvents
+
+GUI.FormNestHistory..SetFocus
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.Link.End
+
+Program.Sub.gsgcNestHistory_RowCellClick.Start
+F.Intrinsic.Control.Try
+
+V.Local.sValue1.Declare(String)
+V.Local.sValue2.Declare(String)
+V.Local.sParameters.Declare(String)
+
+F.Intrinsic.Control.SelectCase(V.Args.Column.UCase)
+	F.Intrinsic.Control.CaseAny("NEST_MATERIAL")
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNests", "NEST_MATERIAL", V.Args.RowIndex, V.Local.sValue1)
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNests", "NEST_LOCATION", V.Args.RowIndex, V.Local.sValue2)
+		F.Intrinsic.String.ConcatCallWrapperArgs(V.Local.sValue1, V.Local.sValue2, "M", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "300011", "PARAMETERS", V.Local.sParameters)
+		
+	F.Intrinsic.Control.CaseAny("WO_JOB", "WO_SUFFIX", "LABOR_SEQUENCE")
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestWorkOrders", "WO_JOB", V.Args.RowIndex, V.Local.sValue1)
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestWorkOrders", "WO_SUFFIX", V.Args.RowIndex, V.Local.sValue2)
+		F.Intrinsic.String.ConcatCallWrapperArgs("7", V.Local.sValue1, V.Local.sValue2, "A", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "450000", "PARAMETERS", V.Local.sParameters)
+	
+	F.Intrinsic.Control.Case("ISSUE_MATERIAL")
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestIssues", "ISSUE_MATERIAL", V.Args.RowIndex, V.Local.sValue1)
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestIssues", "ISSUE_LOCATION", V.Args.RowIndex, V.Local.sValue2)
+		F.Intrinsic.String.ConcatCallWrapperArgs(V.Local.sValue1, V.Local.sValue2, "M", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "300011", "PARAMETERS", V.Local.sParameters)
+		
+	F.Intrinsic.Control.CaseAny("ISSUE_JOB", "ISSUE_SUFFIX", "MATERIAL_SEQUENCE")
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestIssues", "ISSUE_JOB", V.Args.RowIndex, V.Local.sValue1)
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestIssues", "ISSUE_SUFFIX", V.Args.RowIndex, V.Local.sValue2)
+		F.Intrinsic.String.ConcatCallWrapperArgs("7", V.Local.sValue1, V.Local.sValue2, "A", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "450000", "PARAMETERS", V.Local.sParameters)
+	
+	F.Intrinsic.Control.Case("DROP_MATERIAL")
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestDrops", "DROP_MATERIAL", V.Args.RowIndex, V.Local.sValue1)
+		GUI.FormNestHistory.gsgcNestHistory.GetCellValueByColumnName("gvNestDrops", "DROP_LOCATION", V.Args.RowIndex, V.Local.sValue2)
+		F.Intrinsic.String.ConcatCallWrapperArgs(V.Local.sValue1, V.Local.sValue2, "M", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "300011", "PARAMETERS", V.Local.sParameters)
+		
+F.Intrinsic.Control.EndSelect
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.gsgcNestHistory_RowCellClick.End
+
+Program.Sub.gsgcWorkOrders_RowCellClick.Start
+F.Intrinsic.Control.Try
+
+V.Local.sJob.Declare(String)
+V.Local.sSuffix.Declare(String)
+V.Local.sParameters.Declare(String)
+
+F.Intrinsic.Control.SelectCase(V.Args.Column.UCase)
+	F.Intrinsic.Control.CaseAny("WO_JOB", "WO_SUFFIX", "LABOR_SEQUENCE")
+		GUI.FormNestHistory.gsgcWorkOrders.GetCellValueByColumnName("gvWorkOrders", "WO_JOB", V.Args.RowIndex, V.Local.sJob)
+		GUI.FormNestHistory.gsgcWorkOrders.GetCellValueByColumnName("gvWorkOrders", "WO_SUFFIX", V.Args.RowIndex, V.Local.sSuffix)
+		F.Intrinsic.String.ConcatCallWrapperArgs("7", V.Local.sJob, V.Local.sSuffix, "A", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "450000", "PARAMETERS", V.Local.sParameters)
+		
+F.Intrinsic.Control.EndSelect
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.gsgcWorkOrders_RowCellClick.End
+
+Program.Sub.gsgcIssues_RowCellClick.Start
+F.Intrinsic.Control.Try
+
+V.Local.sValue1.Declare(String)
+V.Local.sValue2.Declare(String)
+V.Local.sParameters.Declare(String)
+
+F.Intrinsic.Control.SelectCase(V.Args.Column.UCase)
+	F.Intrinsic.Control.Case("ISSUE_MATERIAL")
+		GUI.FormNestHistory.gsgcIssues.GetCellValueByColumnName("gvIssues", "ISSUE_MATERIAL", V.Args.RowIndex, V.Local.sValue1)
+		GUI.FormNestHistory.gsgcIssues.GetCellValueByColumnName("gvIssues", "ISSUE_LOCATION", V.Args.RowIndex, V.Local.sValue2)
+		F.Intrinsic.String.ConcatCallWrapperArgs(V.Local.sValue1, V.Local.sValue2, "M", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "300011", "PARAMETERS", V.Local.sParameters)
+	
+	F.Intrinsic.Control.CaseAny("ISSUE_JOB", "ISSUE_SUFFIX", "MATERIAL_SEQUENCE")
+		GUI.FormNestHistory.gsgcIssues.GetCellValueByColumnName("gvIssues", "ISSUE_JOB", V.Args.RowIndex, V.Local.sValue1)
+		GUI.FormNestHistory.gsgcIssues.GetCellValueByColumnName("gvIssues", "ISSUE_SUFFIX", V.Args.RowIndex, V.Local.sValue2)
+		F.Intrinsic.String.ConcatCallWrapperArgs("7", V.Local.sValue1, V.Local.sValue2, "A", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "450000", "PARAMETERS", V.Local.sParameters)
+		
+F.Intrinsic.Control.EndSelect
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.gsgcIssues_RowCellClick.End
+
+Program.Sub.gsgcDrops_RowCellClick.Start
+F.Intrinsic.Control.Try
+
+V.Local.sMaterial.Declare(String)
+V.Local.sLocation.Declare(String)
+V.Local.sParameters.Declare(String)
+
+F.Intrinsic.Control.If(V.Args.Column.UCase, =, "DROP_MATERIAL")
+	GUI.FormNestHistory.gsgcDrops.GetCellValueByColumnName("gvDrops", "DROP_MATERIAL", V.Args.RowIndex, V.Local.sMaterial)
+	GUI.FormNestHistory.gsgcDrops.GetCellValueByColumnName("gvDrops", "DROP_LOCATION", V.Args.RowIndex, V.Local.sLocation)
+	F.Intrinsic.String.ConcatCallWrapperArgs(V.Local.sMaterial, V.Local.sLocation, "M", V.Local.sParameters)
+	F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "300011", "PARAMETERS", V.Local.sParameters)
+	
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.gsgcDrops_RowCellClick.End
+
+Program.Sub.LoadBlankPartSeparationDataTable.Start
+F.Intrinsic.Control.Try
+
+F.Data.DataTable.Create("dtPartSeparation", True)
+F.Data.DataTable.AddColumn("dtPartSeparation", "RECORD_ID", "Long", -1)
+F.Data.DataTable.AddColumn("dtPartSeparation", "IMPORT_TIMESTAMP", "Date")
+F.Data.DataTable.AddColumn("dtPartSeparation", "JOB", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "SUFFIX", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "SEPARATION_SEQUENCE", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "WORKCENTER", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "GOOD_PIECES", "Float", 0)
+F.Data.DataTable.AddColumn("dtPartSeparation", "BAD_PIECES", "Float", 0)
+F.Data.DataTable.AddColumn("dtPartSeparation", "TIME", "Float", 0)
+F.Data.DataTable.AddColumn("dtPartSeparation", "EMPLOYEE", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "IMPORT_USER", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "PROFILE", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "FILE", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "EMPLOYEE_NAME", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "WORKCENTER_DESCRIPTION", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "DESCRIPTION", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "SEQUENCE_DESCRIPTION", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "CLOSE", "Boolean", False)
+F.Data.DataTable.AddExpressionColumn("dtPartSeparation", "WORK_ORDER", "String", "IIF(TRIM(IsNull([SUFFIX], '')) = '', TRIM([JOB]), TRIM([JOB]) + '-' + TRIM([SUFFIX]))")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadBlankPartSeparationDataTable.End
+
+Program.Sub.LoadPartSeparationGrid.Start
+F.Intrinsic.Control.Try
+
+V.Local.iIndex.Declare(Long, -1)
+
+GUI.FormNestHistory.gsgcPartSeparation.AddGridviewFromDataTable("gvPartSeparation", "dtPartSeparation")
+
+GUI.FormNestHistory.gsgcPartSeparation.SetGridviewProperty("gvPartSeparation", "ReadOnly", True)
+GUI.FormNestHistory.gsgcPartSeparation.SetGridviewProperty("gvPartSeparation", "Editable", False)
+GUI.FormNestHistory.gsgcPartSeparation.SetGridviewProperty("gvPartSeparation", "OptionsViewColumnAutoWidth", False)
+
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "RECORD_ID", "Visible", False)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "JOB", "Visible", False)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SUFFIX", "Visible", False)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "EMPLOYEE", "Visible", False)
+
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "RECORD_ID", "Caption", "Record ID")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "IMPORT_TIMESTAMP", "Caption", "Import Timestamp")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "JOB", "Caption", "Job")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SUFFIX", "Caption", "Suffix")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SEPARATION_SEQUENCE", "Caption", "Sequence")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORKCENTER", "Caption", "WC")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "GOOD_PIECES", "Caption", "Good Pieces")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "BAD_PIECES", "Caption", "Bad Pieces")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "TIME", "Caption", "Time")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "EMPLOYEE", "Caption", "Employee")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "IMPORT_USER", "Caption", "Import User")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "PROFILE", "Caption", "Profile")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "FILE", "Caption", "File")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "EMPLOYEE_NAME", "Caption", "Employee Name")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORKCENTER_DESCRIPTION", "Caption", "WC Description")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "DESCRIPTION", "Caption", "Description")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "CLOSE", "Caption", "Close")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORK_ORDER", "Caption", "Work Order")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SEQUENCE_DESCRIPTION", "Caption", "Seq. Description")
+
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", "gsgcPartSeparation", "GridView", "gvPartSeparation", "DataTable", "dtPartSeparation", "Property", "HeaderFontBold", "Value", True)
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", "gsgcPartSeparation", "GridView", "gvPartSeparation", "DataTable", "dtPartSeparation", "Property", "HeaderHAlignment", "Value", "Center")
+F.Intrinsic.Control.CallSub(SetGridViewProperty, "Form", "FormNestHistory", "GridControl", "gsgcPartSeparation", "GridView", "gvPartSeparation", "DataTable", "dtPartSeparation", "Property", "CellHAlignment", "Value", "Center")
+
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "RECORD_ID", "MinWidth", 40)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "IMPORT_TIMESTAMP", "MinWidth", 120)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "JOB", "MinWidth", 80)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SUFFIX", "MinWidth", 60)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SEPARATION_SEQUENCE", "MinWidth", 80)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORKCENTER", "MinWidth", 50)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "GOOD_PIECES", "MinWidth", 80)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "BAD_PIECES", "MinWidth", 50)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "TIME", "MinWidth", 50)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "EMPLOYEE", "MinWidth", 50)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "IMPORT_USER", "MinWidth", 90)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "PROFILE", "MinWidth", 60)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "FILE", "MinWidth", 160)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "EMPLOYEE_NAME", "MinWidth", 110)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORKCENTER_DESCRIPTION", "MinWidth", 120)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "DESCRIPTION", "MinWidth", 120)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "CLOSE", "MinWidth", 40)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORK_ORDER", "MinWidth", 100)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SEQUENCE_DESCRIPTION", "MinWidth", 120)
+
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORK_ORDER", "CellForeColor", "Blue")
+
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "IMPORT_TIMESTAMP", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORK_ORDER", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "DESCRIPTION", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SEPARATION_SEQUENCE", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "SEQUENCE_DESCRIPTION", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORKCENTER", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "WORKCENTER_DESCRIPTION", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "GOOD_PIECES", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "BAD_PIECES", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "TIME", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "EMPLOYEE_NAME", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "CLOSE", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "IMPORT_USER", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "PROFILE", "VisibleIndex", V.Local.iIndex.++)
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "FILE", "VisibleIndex", V.Local.iIndex.++)
+
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "GOOD_PIECES", "DisplayCustomNumeric", "#,##0")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "BAD_PIECES", "DisplayCustomNumeric", "#,##0")
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "TIME", "DisplayCustomNumeric", "#,##0.00")
+
+GUI.FormNestHistory.gsgcPartSeparation.SetColumnProperty("gvPartSeparation", "IMPORT_TIMESTAMP", "SortOrder", "Descending")
+
+GUI.FormNestHistory.gsgcPartSeparation.MainView("gvPartSeparation")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadPartSeparationGrid.End
+
+Program.Sub.LoadPartSeparationData.Start
+F.Intrinsic.Control.Try
+
+V.Local.dStart.Declare(Date)
+V.Local.dEnd.Declare(Date)
+
+V.Local.sSQL.Declare(String)
+
+V.Local.dStart.Set(V.Screen.FormNestHistory!dtpStart.Value)
+V.Local.dEnd.Set(V.Screen.FormNestHistory!dtpEnd.Value)
+
+F.Intrinsic.String.Build("select RECORD_ID, IMPORT_TIMESTAMP, RTRIM(JOB) JOB, RTRIM(SUFFIX) SUFFIX, RTRIM(SEPARATION_SEQUENCE) SEPARATION_SEQUENCE, RTRIM(WORKCENTER) WORKCENTER, GOOD_PIECES, BAD_PIECES, TIME, RTRIM(EMPLOYEE) EMPLOYEE, RTRIM(IMPORT_USER) IMPORT_USER, RTRIM(PROFILE) PROFILE, FILE, CLOSE, RTRIM(JOB) + '-' + RTRIM(SUFFIX) JS, RTRIM(JOB) + '-' + RTRIM(SUFFIX) + '-' + RTRIM(SEPARATION_SEQUENCE) JSS from GCG_4980_SEP_HIST where IMPORT_TIMESTAMP between '{0}' and '{1}'", V.Local.dStart.PervasiveDate, V.Local.dEnd.PervasiveDate, V.Local.sSQL)
+
+F.Intrinsic.Control.CallSub(Connection, "Connect", True)
+F.Data.DataTable.CreateFromSQL("dtPartSeparationTemp", "Con", V.Local.sSQL)
+
+'fill WC name
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(WORK_GROUP), RTRIM(DESCR) from V_WORKGROUP_HEAD union select RTRIM(MACHINE), RTRIM(WC_NAME) from V_WORKCENTERS")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtPartSeparationTemp", "WORKCENTER_DESCRIPTION", "String", "")
+F.Data.DataTable.FillFromDictionary("dtPartSeparationTemp", "dictTemp", "WORKCENTER", "WORKCENTER_DESCRIPTION")
+F.Data.Dictionary.Close("dictTemp")
+
+'fill WO description
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(JOB) + '-' + RTRIM(SUFFIX), RTRIM(DESCRIPTION) from V_JOB_HEADER")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtPartSeparationTemp", "DESCRIPTION", "String", "")
+F.Data.DataTable.FillFromDictionary("dtPartSeparationTemp", "dictTemp", "JS", "DESCRIPTION")
+F.Data.Dictionary.Close("dictTemp")
+
+'fill sequence description
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(JOB) + '-' + RTRIM(SUFFIX) + '-' + RTRIM(SEQ), RTRIM(DESCRIPTION) from V_JOB_OPERATIONS where LMO = 'L'")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtPartSeparationTemp", "SEQUENCE_DESCRIPTION", "String", "")
+F.Data.DataTable.FillFromDictionary("dtPartSeparationTemp", "dictTemp", "JSS", "SEQUENCE_DESCRIPTION")
+F.Data.Dictionary.Close("dictTemp")
+
+'fill employee name
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(EMPLOYEE), RTRIM(NAME) from V_EMPLOYEE_MSTR")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.AddColumn("dtPartSeparationTemp", "EMPLOYEE_NAME", "String", "")
+F.Data.DataTable.FillFromDictionary("dtPartSeparationTemp", "dictTemp", "EMPLOYEE", "EMPLOYEE_NAME")
+F.Data.Dictionary.Close("dictTemp")
+
+F.Intrinsic.Control.CallSub(Connection, "Connect", False)
+
+F.Data.DataTable.DeleteRow("dtPartSeparation")
+F.Data.DataTable.Merge("dtPartSeparationTemp", "dtPartSeparation", False, 2)
+F.Data.DataTable.AcceptChanges("dtPartSeparation")
+F.Data.DataTable.Close("dtPartSeparationTemp")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadPartSeparationData.End
+
+Program.Sub.gsgcPartSeparation_RowCellClick.Start
+F.Intrinsic.Control.Try
+
+V.Local.sJob.Declare(String)
+V.Local.sSuffix.Declare(String)
+V.Local.sParameters.Declare(String)
+
+F.Intrinsic.Control.SelectCase(V.Args.Column.UCase)
+	F.Intrinsic.Control.CaseAny("WORK_ORDER")
+		GUI.FormNestHistory.gsgcPartSeparation.GetCellValueByColumnName("gvPartSeparation", "JOB", V.Args.RowIndex, V.Local.sJob)
+		GUI.FormNestHistory.gsgcPartSeparation.GetCellValueByColumnName("gvPartSeparation", "SUFFIX", V.Args.RowIndex, V.Local.sSuffix)
+		F.Intrinsic.String.ConcatCallWrapperArgs("7", V.Local.sJob, V.Local.sSuffix, "A", V.Local.sParameters)
+		F.Intrinsic.Control.CallSub(Link, "CALLWRAPPER", "450000", "PARAMETERS", V.Local.sParameters)
+		
+F.Intrinsic.Control.EndSelect
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Callback", "FormNestHistory_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.gsgcPartSeparation_RowCellClick.End
+
+Program.Sub.Comments.Start
+${$5$}$2.0.0.0$}$2
+${$6$}$rseddon$}$20230223102437645$}$DkKb6sybY9hE3N0enyRwKJuHSlMGTgRb1QOY9kE+0aB2moz+grGOLaMfhlev3I4XxQe/rUFRK6Q=
+Program.Sub.Comments.End
