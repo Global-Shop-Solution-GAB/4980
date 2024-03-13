@@ -1,0 +1,397 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'GCG_4980_MoveTicket.g2u
+'Trey S
+'September 3rd, 2019
+'For using the move ticket programs with the Nesting Import
+'Both the 3144 and 5455 Scripts have hook dependent code, so we either need to modify them or copy the relavent code
+'this script will contain the code for both move tickets
+'will be launched from GCG_4980_NEST_IMP when a move ticket needs to be printed
+'most of the ticket printing code is ancient and god awful, but I Don't have the time to rewrite it...
+
+F.Intrinsic.Control.Try
+
+V.Local.sJob.Declare(String)
+V.Local.sSuffix.Declare(String)
+V.Local.sSeq.Declare(String)
+V.Local.sQty.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.sScrapQty.Declare(String)
+V.Local.sCurPart.Declare(String)
+V.Local.sCurDescr.Declare(String)
+V.Local.sQtyCompleted.Declare(Float)
+V.Local.sNextSeq.Declare(String)
+V.Local.sNextPart.Declare(String)
+V.Local.sNextDescr.Declare(String)
+V.Local.sLMO.Declare(String)
+V.Local.sNext_DateStart.Declare(String)
+V.Local.sNext_DateDue.Declare(String)
+V.Local.sPart.Declare(String)
+V.Local.sCust.Declare(String)
+V.Local.sWOPriority.Declare(String)
+V.Local.sPartDescr.Declare(String)
+V.Local.sWOQty.Declare(String)
+V.Local.sWOCustQty.Declare(String)
+V.Local.sWODateDue.Declare(String)
+V.Local.sName.Declare(String)
+V.Local.sEmployee.Declare(String)
+V.Local.sScrapCode.Declare(String)
+V.Local.sScrapDescription.Declare(String)
+V.Local.sParentJob.Declare(String)
+V.Local.sParentSuffix.Declare(String)
+V.Local.sParentPart.Declare(String)
+V.Local.sParentDescr.Declare(String)
+V.Local.sTopParentJob.Declare(String)
+V.Local.sTopParentSuffix.Declare(String)
+V.Local.sTopParentPart.Declare(String)
+V.Local.sTopParentDescr.Declare(String)
+V.Local.sParentInitWC.Declare(String)
+V.Local.sWC.Declare(String)
+V.Local.sQualitynbr.Declare(String)
+V.Local.sCloseflag.Declare(String)
+V.Local.sComments.Declare(String)
+V.Local.sRptLoc.Declare(String)
+V.Local.iRptID.Declare(Long)
+V.Local.sTPrinter.Declare(String)
+V.Local.sScrapPrinter.Declare(String)
+V.Local.sScrapFlag.Declare(String)
+V.Local.sParams.Declare(String)
+V.Local.sValues.Declare(String)
+V.Local.sScrapReF.Declare(String)
+V.Local.dNext_DateStart.Declare(Date)
+V.Local.dNext_DateDue.Declare(Date)
+V.Local.iRet.Declare(Long)
+V.Local.iBIRunID.Declare(Long)
+V.Local.iLogID.Declare(Long)
+V.Local.sType.Declare(String)
+V.Local.sBITable.Declare(String)
+V.Local.sSettingsTable.Declare(String)
+V.Local.sReportName.Declare(String)
+V.Local.sData.Declare(String)
+V.Local.sCustomLabel.Declare(String)
+V.Local.sError.Declare(String)
+V.Local.fWeight.Declare(Float)
+V.Local.sCustomerPO.Declare(String)
+V.Local.sNote.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.bExists.Declare(Boolean, False)
+
+F.Intrinsic.String.Split(V.Passed.Data, "*#!#*", V.Local.sData)
+
+F.ODBC.Connection!Con.OpenCompanyConnection
+
+V.Local.sjob.Set(V.Local.sData(0))
+V.Local.ssuffix.Set(V.Local.sData(1))
+V.Local.sseq.Set(V.Local.sData(2))
+V.Local.sQty.Set(V.Local.sData(3))
+V.Local.sEmployee.Set(V.Local.sData(4))
+V.Local.sWC.Set(V.Local.sData(5))
+V.Local.sCloseflag.Set(V.Local.sData(6))
+V.Local.sQualitynbr.Set(V.Local.sData(7))
+V.Local.sScrapReF.Set(V.Local.sData(8))
+V.Local.sScrapQty.Set( V.Local.sData(9))
+V.Local.sComments.Set(V.Local.sData(10))
+V.Local.sScrapCode.Set(V.Local.sData(11))
+V.Local.sType.Set(V.Passed.MOVE_TICKET)
+V.Local.sCustomLabel.Set(V.Passed.CUSTOM_LABEL)
+
+'decide which report we're printing
+F.Intrinsic.Control.If(V.Local.sType, =, "CRYSTAL")
+	V.Local.sBITable.Set("GCG_3144_WIP_OP_LABL")
+	V.Local.sSettingsTable.Set("GCG_3144_MVE_TKT_SU")
+	V.Local.sReportName.Set("GCG_3144_WIP_Operation_Label.rpt")
+	F.Intrinsic.String.Build("{0}\Custom\{1}", V.Caller.BusintDir, V.Local.sReportName, V.Local.sRptLoc)
+F.Intrinsic.Control.ElseIf(V.Local.sType, =, "CODESOFT")
+	V.Local.sBITable.Set("GAB_5455_WIP_OP_LABL")
+	V.Local.sSettingsTable.Set("GAB_5455_MVE_TKT_SU")
+	F.Intrinsic.Control.If(V.Local.sCustomLabel.Trim, !=, "")
+		V.Local.sReportName.Set(V.Local.sCustomLabel)
+	F.Intrinsic.Control.Else
+		V.Local.sReportName.Set("GAB_5455_WIP_Opertation_Label.lab")
+	F.Intrinsic.Control.EndIf
+	'assuming it's in the custom directory, may need to get the directory from report maintenance
+	F.Intrinsic.String.Build("{0}\LABELS\Custom\{1}", V.Caller.BusintDir, V.Local.sReportName, V.Local.sRptLoc)
+F.Intrinsic.Control.ElseIf(V.Local.sType, =, "ATG")
+	V.Local.sBITable.Set("ATG_WIP_OPER_LABEL")
+	V.Local.sSettingsTable.Set("ATG_MOVE_TCKT_SETUP")
+	V.Local.sReportName.Set("OYB_WIP_Operation_Label_ATG.rpt")
+	F.Intrinsic.String.Build("{0}\Custom\{1}", V.Caller.BusintDir, V.Local.sReportName, V.Local.sRptLoc)
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+
+'if good pieces is 0 then don't continue
+F.Intrinsic.Control.If(V.Local.sQty.Float,<=,0,"AND",V.Local.sscrapqty.Float,<=,0)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.String.Build("SELECT PART, DESCRIPTION, UNITS_COMPLETE FROM V_JOB_OPERATIONS WHERE JOB = '{0}' AND SUFFIX = '{1}' AND SEQ = '{2}' ",V.Local.sjob,V.Local.sSuffix,V.Local.sSeq,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sCurPart.Set(V.ODBC.Con!rstSel.FieldValTrim!PART)
+	V.Local.sCurDescr.Set(V.ODBC.Con!rstSel.FieldValTrim!DESCRIPTION)
+	V.Local.sQtyCompleted.Set(V.ODBC.Con!rstSel.FieldValTrim!UNITS_COMPLETE)
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+F.Intrinsic.String.Build("SELECT SEQ, PART, DESCRIPTION, LMO, DATE_START, DATE_DUE, UNITS_COMPLETE FROM V_JOB_OPERATIONS WHERE JOB = '{0}' AND SUFFIX = '{1}' AND SEQ > '{2}' AND LMO <> 'C' AND LMO <> 'M' AND TASK_SEQ <> 'T' ORDER BY SEQ ",V.Local.sJob,V.Local.sSuffix,V.Local.sSeq,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sNextSeq.Set(V.ODBC.Con!rstSel.FieldValTrim!SEQ)
+	V.Local.sNextPart.Set(V.ODBC.Con!rstSel.FieldValTrim!PART)
+	V.Local.sNextDescr.Set(V.ODBC.Con!rstSel.FieldValTrim!DESCRIPTION)
+	V.Local.sLMO.Set(V.ODBC.Con!rstSel.FieldValTrim!LMO)
+	V.Local.dNext_DateStart.Set(V.ODBC.Con!rstSel.FieldVal!DATE_START)
+	V.Local.dNext_DateDue.Set(V.ODBC.Con!rstSel.FieldVal!DATE_DUE)
+F.Intrinsic.Control.Else
+	F.Intrinsic.Date.ConvertDString("01/01/1900","mm/dd/yyyy",V.Local.dNext_DateStart)
+	F.Intrinsic.Date.ConvertDString("01/01/1900","mm/dd/yyyy",V.Local.dNext_DateDue)
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+F.Intrinsic.String.Build("SELECT PART, CUSTOMER, PRIORITY, PART_DESCRIPTION,QTY_ORDER, QTY_CUSTOMER, DATE_DUE, CUSTOMER_PO FROM V_JOB_HEADER WHERE JOB = '{0}' AND SUFFIX = '{1}' ",V.Local.sJob,V.Local.sSuffix,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sPart.Set(V.ODBC.Con!rstSel.FieldValTrim!PART)
+	V.Local.sCust.Set(V.ODBC.Con!rstSel.FieldValTrim!CUSTOMER)
+	V.Local.sWOPriority.Set(V.ODBC.Con!rstSel.FieldValTrim!PRIORITY)
+	V.Local.sPartDescr.Set(V.ODBC.Con!rstSel.FieldValTrim!PART_DESCRIPTION)
+	V.Local.sWOQty.Set(V.ODBC.Con!rstSel.FieldValTrim!QTY_ORDER)
+	V.Local.sWOCustQty.Set(V.ODBC.Con!rstSel.FieldValTrim!QTY_CUSTOMER)
+	V.Local.sWODateDue.Set(V.ODBC.Con!rstSel.FieldValTrim!DATE_DUE)
+	V.Local.sCustomerPO.Set(V.ODBC.Con!rstSel.FieldValTrim!CUSTOMER_PO)
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+'get the Weight from Order_Lines table
+F.Intrinsic.String.Build("Select Sales_Order, Sales_Order_line from V_JOB_HEADER where JOB = '{0}' and SUFFIX = '{1}'",v.Local.sjob,v.Local.ssuffix,v.Local.sSQL)
+F.ODBC.Connection!Con.ExecuteAndReturn(v.Local.sSQL,v.Local.sRet)
+F.Intrinsic.String.Split(v.Local.sRet,"*!*",v.Local.sRet)
+F.Intrinsic.String.Build("Select Weight from V_ORDER_LINES where ORDER_NO = '{0}' and RECORD_NO = '{1}0'",v.Local.sRet(0),v.Local.sRet(1),v.Local.sSQL)
+F.ODBC.Connection!Con.ExecuteAndReturn(v.Local.sSQL,v.Local.fWeight)
+
+'getting Order Notes
+F.Intrinsic.String.Build("Select UF15 from CRM_UF_VALUE where TYPE = '12' and COMPID = '{0}'", V.Local.sCust, V.Local.sSQL)
+F.ODBC.Connection!Con.ExecuteAndReturn(V.Local.sSQL, V.Local.sNote)
+
+F.Intrinsic.String.Build("SELECT NAME_CUSTOMER FROM V_CUSTOMER_MASTER WHERE CUSTOMER = '{0}' ",V.Local.sCust.PSQLFriendly,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sName.Set(V.ODBC.Con!rstSel.FieldValTrim!NAME_CUSTOMER)
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+F.Intrinsic.String.Build("SELECT SCRAP_REASON FROM V_JOBS_IN_PROCESS WHERE JOB = '{0}' AND SUFFIX = '{1}' AND SEQUENCE = '{2}' AND EMPLOYEE_NAME = '{3}' ORDER BY SEQUENCE_KEY DESC ",V.Local.sJob,V.Local.sSuffix,V.Local.sSeq,V.Local.sEmployee.PSQLFriendly,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sScrapCode.Set(V.ODBC.Con!rstSel.FieldValTrim!SCRAP_REASON)
+	F.Intrinsic.String.Build("SELECT SCRAP_CODE_DESC FROM V_RJCT_SCRP_CODES WHERE SCRAP_CODE = '{0}' ",V.Local.sScrapCode,V.Local.sSQL)
+	F.ODBC.Connection!Con.OpenRecordsetRO("rstSelA",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.Con!rstSelA.EOF,=,False)
+		V.Local.sScrapDescription.Set(V.ODBC.Con!rstSelA.FieldValTrim!SCRAP_CODE_DESC)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Con!rstSelA.Close
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+F.Intrinsic.String.Build("SELECT PARENT_WO, PARENT_SUFFIX_PARENT FROM V_JOB_HEADER WHERE JOB = '{0}' AND SUFFIX = '{1}' ",V.Local.sJob,V.Local.sSuffix,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sParentJob.Set(V.ODBC.Con!rstSel.FieldValTrim!Parent_WO)
+	V.Local.sParentSuffix.Set(V.ODBC.Con!rstSel.FieldValTrim!Parent_Suffix_Parent)
+	F.Intrinsic.String.Build("SELECT PART, PART_DESCRIPTION FROM V_JOB_HEADER WHERE JOB = '{0}' AND SUFFIX = '{1}' ",V.Local.sParentJob,V.Local.sParentSuffix,V.Local.sSQL)
+	F.ODBC.Connection!Con.OpenRecordsetRO("rstSelA",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.Con!rstSelA.EOF,=,False)
+		V.Local.sParentPart.Set(V.ODBC.Con!rstSelA.FieldValTrim!Part)
+		V.Local.sParentDescr.Set(V.ODBC.Con!rstSelA.FieldValTrim!Part_Description)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.Con!rstSelA.Close
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+F.Intrinsic.String.Build("SELECT JOB, SUFFIX, PART, PART_DESCRIPTION FROM V_JOB_HEADER WHERE JOB = '{0}' AND SUFFIX = '000' ",V.Local.sJob,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sTopParentJob.Set(V.ODBC.Con!rstSel.FieldValTrim!Job)
+	V.Local.sTopParentSuffix.Set(V.ODBC.Con!rstSel.FieldValTrim!Suffix)
+	V.Local.sTopParentPart.Set(V.ODBC.Con!rstSel.FieldValTrim!Part)
+	V.Local.sTopParentDescr.Set(V.ODBC.Con!rstSel.FieldValTrim!Part_Description)
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+F.Intrinsic.String.Build("SELECT PART FROM V_JOB_OPERATIONS WHERE JOB = '{0}' AND SUFFIX = '{1}' AND LMO = 'L' ORDER BY SEQ ",V.Local.sParentJob,V.Local.sParentSuffix,V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sParentInitWC.Set(V.ODBC.Con!rstSel.FieldValTrim!PART)
+F.Intrinsic.Control.EndIf
+F.ODBC.Con!rstSel.Close
+
+'clear old records
+F.Intrinsic.String.Build("DELETE FROM {1} WHERE TRMNL = '{0}'", V.Caller.Terminal, V.Local.sBITable, V.local.sSQL)
+F.ODBC.Connection!Con.Execute(V.local.sSQL)
+
+F.Intrinsic.String.Build("SELECT * FROM {1} WHERE TRMNL = '{0}' ",V.Caller.Terminal, V.Local.sBITable, V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRW("rstSel",V.Local.sSQL)
+F.ODBC.Con!rstSel.AddNew
+F.ODBC.Con!rstSel.Set!TRMNL(V.Caller.Terminal)
+F.ODBC.Con!rstSel.Set!JOB(V.Local.sJob)
+F.ODBC.Con!rstSel.Set!SUFFIX(V.Local.sSuffix)
+F.ODBC.Con!rstSel.Set!CUR_SEQ(V.Local.sSeq)
+F.ODBC.Con!rstSel.Set!CUR_PART(V.Local.sCurPart)
+F.ODBC.Con!rstSel.Set!CUR_DESCR(V.Local.sCurDescr)
+F.ODBC.Con!rstSel.Set!LMO(V.Local.sLMO)
+F.ODBC.Con!rstSel.Set!QTY(V.Local.sQty)
+F.ODBC.Con!rstSel.Set!WORKCENTER(V.Local.sWC)
+F.ODBC.Con!rstSel.Set!EMPLOYEE(V.Local.sEmployee)
+F.ODBC.Con!rstSel.Set!QUALITY_NO(V.Local.sQualitynbr)
+F.ODBC.Con!rstSel.Set!SCRAP_CODE(V.Local.sScrapCode)
+F.ODBC.Con!rstSel.Set!SCRAP_CODE_DESC(V.Local.sScrapDescription)
+F.ODBC.Con!rstSel.Set!SCRAP_QTY(V.Local.sScrapqty.Float)
+F.ODBC.Con!rstSel.Set!CLOSE_FLAG(V.Local.sCloseflag)
+F.ODBC.Con!rstSel.Set!PART(V.Local.sPart)
+F.ODBC.Con!rstSel.Set!CUSTOMER(V.Local.sCust)
+F.ODBC.Con!rstSel.Set!NAME(V.Local.sName)
+F.ODBC.Con!rstSel.Set!NEXT_SEQ(V.Local.sNextSeq)
+F.ODBC.Con!rstSel.Set!NEXT_PART(V.Local.sNextPart)
+F.ODBC.Con!rstSel.Set!NEXT_DESCR(V.Local.sNextDescr)
+F.ODBC.Con!rstSel.Set!Parent_Job(V.Local.sParentJob)
+F.ODBC.Con!rstSel.Set!Parent_Suffix(V.Local.sParentSuffix)
+F.ODBC.Con!rstSel.Set!Parent_Part(V.Local.sParentPart)
+F.ODBC.Con!rstSel.Set!Parent_Descr(V.Local.sParentDescr)
+F.ODBC.Con!rstSel.Set!Top_Parent_Job(V.Local.sTopParentJob)
+F.ODBC.Con!rstSel.Set!Top_Parent_Suffix(V.Local.sTopParentSuffix)
+F.ODBC.Con!rstSel.Set!Top_Parent_Part(V.Local.sTopParentPart)
+F.ODBC.Con!rstSel.Set!Top_Parent_Descr(V.Local.sTopParentDescr)
+F.ODBC.Con!rstSel.Set!QUALITY_NO(V.Local.sQualitynbr)
+F.ODBC.Con!rstSel.Set!NEXT_SEQ_START(V.Local.dNext_DateStart.PervasiveDate)
+F.ODBC.Con!rstSel.Set!NEXT_SEQ_DUE(V.Local.dNext_DateDue.PervasiveDate)
+F.ODBC.Con!rstSel.Set!WO_PRIORITY(V.Local.sWOPriority)
+F.ODBC.Con!rstSel.Set!PART_DESCR(V.Local.sPartDescr)
+F.ODBC.Con!rstSel.Set!WO_QTY(V.Local.sWOQty)
+F.ODBC.Con!rstSel.Set!WO_CUSTOMER_QTY(V.Local.sWOCustQty)
+F.ODBC.Con!rstSel.Set!WO_DUE_DATE(V.Local.sWODateDue)
+F.ODBC.Con!rstSel.Set!QTY_COMPLETED(V.Local.sQtyCompleted)
+F.ODBC.Con!rstSel.Set!Parent_InitWC(V.Local.sParentInitWC)
+F.ODBC.Con!rstSel.Set!Comments(V.Local.sComments)
+
+F.ODBC.Con!rstSel.FieldExists("Weight", V.Local.bExists)
+F.Intrinsic.Control.If(V.Local.bExists)
+	F.ODBC.Con!rstSel.Set!Weight(V.Local.fWeight)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Con!rstSel.FieldExists("Notes", V.Local.bExists)
+F.Intrinsic.Control.If(V.Local.bExists)
+	F.ODBC.Con!rstSel.Set!Notes(V.Local.sNote)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Con!rstSel.FieldExists("CUSTOMER_PO", V.Local.bExists)
+F.Intrinsic.Control.If(V.Local.bExists)
+	F.ODBC.Con!rstSel.Set!CUSTOMER_PO(V.Local.sCustomerPO)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Con!rstSel.Update
+F.ODBC.Con!rstSel.Close
+
+F.Global.BI.InitializeReport(V.Local.sReportName, V.Local.sRptLoc, V.Local.iRptId)
+
+F.Intrinsic.String.Build("SELECT PRINTER, SCRAPPRINTER FROM {1} WHERE TRMNL = '{0}'", V.Caller.Terminal, V.Local.sSettingsTable, V.Local.sSQL)
+F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.Con!rstSel.EOF,=,False)
+	V.Local.sTPrinter.Set(V.ODBC.Con!rstSel.FieldValTrim!Printer)
+	F.Intrinsic.Control.If(V.ODBC.Con!rstSel.FieldValTrim!ScrapPrinter,=,"")
+		V.Local.sScrapPrinter.Set(V.Local.sTPrinter)
+	F.Intrinsic.Control.Else
+		V.Local.sScrapPrinter.Set(V.ODBC.Con!rstSel.FieldValTrim!ScrapPrinter)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.Local.sQty.Float,>,0)
+	F.Intrinsic.Control.If(V.Local.sType, =, "CRYSTAL", "OR", V.Local.sType, =, "ATG")
+		V.Local.sScrapflag.Set("N")
+		F.Intrinsic.String.Split("TRMNL*!*Job*!*Suffix*!*Scrapflag","*!*",V.Local.sParams)
+		F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}*!*{4}",V.Caller.Terminal,V.Local.sJob,V.Local.sSuffix,V.Local.sScrapflag,V.Local.sValues)
+		F.Intrinsic.String.Split(V.Local.sValues,"*!*",V.Local.sValues)
+		F.Global.BI.PrintReport(V.Local.iRptID,3,V.Local.sParams,V.Local.sValues,V.Local.sTPrinter,True)
+	F.Intrinsic.Control.ElseIf(V.Local.sType, =, "CODESOFT")
+		F.Intrinsic.String.Build("select * from GAB_5455_WIP_OP_LABL where TRMNL= '{0}'", V.Caller.Terminal, V.Local.sSQL)
+		F.Data.DataTable.CreateFromSQL("LabelTemp", "Con", V.Local.sSQL)
+		F.Data.DataTable.AddColumn("LabelTemp", "Scrapflag", "String", "N")
+		
+		F.Global.BI.GetRunID(V.Local.iBIRunID)
+		F.Global.BI.StartLogging(V.Local.iBIRunID, V.Local.iRptId, -1, "", V.Local.iLogID)
+		F.Global.BI.PrintCodesoftLabelFromDataTable(V.Local.iBIRunID, V.Local.iLogID, "LabelTemp", V.Local.sTPrinter, False)
+		F.Global.BI.StopLogging(V.Local.iLogID)
+		F.Data.DataTable.Close("LabelTemp")
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Endif
+F.ODBC.Con!rstSel.Close
+
+'need to do something about this
+' Scrap Printer added as optional quantentine label printer when scrap labels printed on colored label stock
+F.Intrinsic.Control.If(V.Local.sscrapqty.Float,>,0)
+	
+	'Scrap - loop through scrap_data table by scrap_ref = sscrapref
+	F.Intrinsic.String.Build("SELECT SCRAP_REF, QUALITY, REASON_CODE, QTY FROM SCRAP_DATA WHERE SCRAP_REF = '{0}' ",V.Local.sScrapRef,V.Local.sSQL)
+	F.ODBC.Connection!Con.OpenRecordsetRO("rstSel",V.Local.sSQL)
+
+	Function.Intrinsic.Control.DoUntil(V.odbc.Con!rstSel.eof,=,True)
+
+		V.Local.sQualitynbr.Set(V.ODBC.Con!rstSel.FieldValTrim!Quality)
+		V.Local.sScrapQty.Set(V.ODBC.Con!rstSel.FieldValTrim!QTY)
+		V.Local.sScrapCode.Set(V.ODBC.Con!rstSel.FieldValTrim!Reason_Code)
+
+		F.Intrinsic.String.Build("SELECT SCRAP_CODE_DESC FROM V_RJCT_SCRP_CODES WHERE SCRAP_CODE = '{0}' ",V.Local.sScrapCode,V.Local.sSQL)
+		F.ODBC.Connection!Con.OpenRecordsetRO("rstSelA",V.Local.sSQL)
+		F.Intrinsic.Control.If(V.ODBC.Con!rstSelA.EOF,=,False)
+			V.Local.sScrapDescription.Set(V.ODBC.Con!rstSelA.FieldValTrim!SCRAP_CODE_DESC)
+		F.Intrinsic.Control.EndIf
+		F.ODBC.Con!rstSelA.Close
+
+		F.Intrinsic.String.Build("SELECT * FROM {1} WHERE TRMNL = '{0}'", V.Caller.Terminal, V.Local.sBITable, V.Local.sSQL)
+		F.ODBC.Connection!Con.OpenRecordsetRW("rstSelB",V.Local.sSQL)
+
+		F.ODBC.Con!rstSelB.Set!QUALITY_NO(V.Local.sQualitynbr)
+		F.ODBC.Con!rstSelB.Set!SCRAP_CODE(V.Local.sScrapCode)
+		F.ODBC.Con!rstSelB.Set!SCRAP_CODE_DESC(V.Local.sScrapDescription)
+		F.ODBC.Con!rstSelB.Set!SCRAP_QTY(V.Local.sscrapqty)
+		F.ODBC.Con!rstSelB.Update
+		F.ODBC.Con!rstSelB.Close
+		
+		F.Intrinsic.Control.If(V.Local.sType, =, "CRYSTAL", "OR", V.Local.sType, =, "ATG")
+			V.Local.sScrapflag.Set("Y")
+			F.Intrinsic.String.Split("TRMNL*!*Job*!*Suffix*!*Scrapflag","*!*",V.Local.sParams)
+			F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*{3}",V.Caller.Terminal,V.Local.sJob,V.Local.sSuffix,V.Local.sScrapflag,V.Local.sValues)
+			F.Intrinsic.String.Split(V.Local.sValues,"*!*",V.Local.sValues)
+			F.Global.BI.PrintReport(V.Local.iRptID,3,V.Local.sParams,V.Local.sValues,V.Local.sScrapPrinter,True)
+		F.Intrinsic.Control.ElseIf(V.Local.sType, =, "CODESOFT")
+			F.Intrinsic.String.Build("select * from GAB_5455_WIP_OP_LABL where TRMNL= '{0}'", V.Caller.Terminal, V.Local.sSQL)
+			F.Data.DataTable.CreateFromSQL("LabelTemp", "Con", V.Local.sSQL)
+			F.Data.DataTable.AddColumn("LabelTemp", "Scrapflag", "String", "Y")
+			
+			F.Global.BI.GetRunID(V.Local.iBIRunID)
+			F.Global.BI.StartLogging(V.Local.iBIRunID, V.Local.iRptId, -1, "", V.Local.iLogID)
+			F.Global.BI.PrintCodesoftLabelFromDataTable(V.Local.iBIRunID, V.Local.iLogID, "LabelTemp", V.Local.sTPrinter, False)
+			F.Global.BI.StopLogging(V.Local.iLogID)
+			F.Data.DataTable.Close("LabelTemp")
+		F.Intrinsic.Control.EndIf
+
+		F.ODBC.con!rstSel.MoveNext
+	Function.Intrinsic.Control.Loop
+	F.ODBC.Con!rstSel.Close
+
+F.Intrinsic.Control.Endif
+
+'F.Intrinsic.String.Build("DELETE FROM {4} WHERE TRMNL = '{0}' AND JOB = '{1}' AND SUFFIX = '{2}' AND CUR_SEQ = '{3}'", V.Caller.Terminal, V.local.sJob, V.local.sSuffix, V.local.sSeq, V.Local.sBITable, V.local.sSQL)
+F.Intrinsic.String.Build("DELETE FROM {1} WHERE TRMNL = '{0}'", V.Caller.Terminal, V.Local.sBITable, V.local.sSQL)
+F.ODBC.Connection!Con.Execute(V.local.sSQL)
+
+F.ODBC.Connection!Con.Close
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Caller.ScriptFile,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
