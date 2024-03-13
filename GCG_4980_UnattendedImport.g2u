@@ -1,0 +1,142 @@
+Program.Sub.Preflight.Start
+Program.External.Include.Library("GCG_4980_SharedFunctions.lib")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'GCG_4980_UnattendedImport.g2u
+'Trey S
+'2020-02-28
+'This script is for running the nesting import unattended. It will run off the post online update hook (38130), and decided whether
+'or not to run the import depending on options.
+
+F.Intrinsic.Control.Try
+
+V.Local.sProfile.Declare(String)
+V.Local.sScript.Declare(String)
+V.Local.sInterval.Declare(String)
+V.Local.iLimit.Declare(Long, 1)
+V.Local.iDiff.Declare(Long)
+V.Local.dDate.Declare(Date)
+
+'check if we're already running
+F.Intrinsic.Control.CallSub(ScriptPIDCheck, "PROJECT", "4980", "TASK", "Unattended_Import_Launcher")
+
+F.Intrinsic.Control.CallSub(Connection, "CONNECT", True)
+
+'grab default profile
+F.ODBC.Connection!Con.ExecuteAndReturn("select RTRIM(Profile) as PROFILE from GCG_4980_NESTPROFILE where DEFAULT_PROFILE = 1", V.Local.sProfile)
+F.Intrinsic.Control.If(V.Ambient.ExecuteAndReturnEOF)
+	'no default profile, exit
+	F.Intrinsic.Control.CallSub(Exit)
+F.Intrinsic.Control.EndIf
+
+'if we are not already running, check if we're supposed to be
+F.Intrinsic.Control.CallSub(GetSetting, "TYPE", "IMPORT_OPTION", "SETTING", "UNATTENDED_IMPORT", "PROFILE", V.Local.sProfile)
+F.Intrinsic.Control.If(V.Args.Setting.Trim, =, "")
+	F.Intrinsic.Control.CallSub(Exit)
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.If(V.Args.Setting.Not)
+		F.Intrinsic.Control.CallSub(Exit)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+'grab frequency
+F.Intrinsic.Control.CallSub(GetSetting, "TYPE", "IMPORT_OPTION", "SETTING", "IMPORT_FREQUENCY", "PROFILE", V.Local.sProfile)
+F.Intrinsic.Control.If(V.Args.Setting.Trim, =, "")
+	'no frequency, exit
+	F.Intrinsic.Control.CallSub(Exit)
+F.Intrinsic.Control.EndIf
+
+'see if it's been long enough to process again
+F.Intrinsic.Control.If(V.Args.Setting.Trim, !=, "Online")
+	F.Intrinsic.Control.SelectCase(V.Args.Setting.Trim)
+		F.Intrinsic.Control.Case("5 Minutes")
+			V.Local.sInterval.Set("N")
+			V.Local.iLimit.Set(5)
+		F.Intrinsic.Control.Case("10 Minutes")
+			V.Local.sInterval.Set("N")
+			V.Local.iLimit.Set(10)
+		F.Intrinsic.Control.Case("15 Minutes")
+			V.Local.sInterval.Set("N")
+			V.Local.iLimit.Set(15)
+		F.Intrinsic.Control.Case("30 Minutes")
+			V.Local.sInterval.Set("N")
+			V.Local.iLimit.Set(30)
+		F.Intrinsic.Control.Case("Hourly")
+			V.Local.sInterval.Set("H")
+		F.Intrinsic.Control.Case("Daily")
+			V.Local.sInterval.Set("D")
+	F.Intrinsic.Control.EndSelect
+	
+	F.Intrinsic.Control.CallSub(ReadLastProcess)
+	V.Local.dDate.Set(V.Args.LAST_RUN_TIME)
+	F.Intrinsic.Date.DateDiff(V.Local.sInterval, V.Local.dDate, V.Ambient.Now, V.Local.iDiff)
+	F.Intrinsic.Control.If(V.Local.iDiff, >, V.Local.iLimit)
+		'process
+		F.Intrinsic.String.Build("{0}\GCG_4980_NEST_IMP.g2u", V.Ambient.ScriptPath, V.Local.sScript)
+		F.Global.General.CallSyncGAS(V.Local.sScript)
+		F.Intrinsic.Control.CallSub(WriteLastProcessTime)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	'process
+	F.Intrinsic.String.Build("{0}\GCG_4980_NEST_IMP.g2u", V.Ambient.ScriptPath, V.Local.sScript)
+	F.Global.General.CallSyncGAS(V.Local.sScript)
+	F.Intrinsic.Control.CallSub(WriteLastProcessTime)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.CallSub(Exit)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", True, "Callback", "Exit", "PROJECT", "4980", "PROJECTTITLE", "Unattended Import Launcher", "TASK", "Unattended_Import_Launcher")
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.ReadLastProcess.Start
+F.Intrinsic.Control.Try
+
+V.Local.sPath.Declare(String)
+V.Local.sContents.Declare(String)
+V.Local.bExists.Declare(Boolean)
+
+F.Intrinsic.String.Build("{0}\Custom\4980\{1}\Unattended Import\Last_Run.dat", V.Caller.GlobalDir, V.Caller.CompanyCode, V.Local.sPath)
+F.Intrinsic.File.Exists(V.Local.sPath, V.Local.bExists)
+F.Intrinsic.Control.If(V.Local.bExists)
+	F.Intrinsic.File.File2String(V.Local.sPath, V.Local.sContents)
+F.Intrinsic.Control.Else
+	V.Local.sContents.Set(V.Ambient.MinDate)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Variable.AddRV("LAST_RUN_TIME", V.Local.sContents)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", True, "Callback", "Exit", "PROJECT", "4980", "PROJECTTITLE", "Unattended Import Launcher", "TASK", "Unattended_Import_Launcher")
+F.Intrinsic.Control.EndTry
+Program.Sub.ReadLastProcess.End
+
+Program.Sub.WriteLastProcessTime.Start
+F.Intrinsic.Control.Try
+
+V.Local.sPath.Declare(String)
+
+F.Intrinsic.String.Build("{0}\Custom\4980\{1}\Unattended Import", V.Caller.GlobalDir, V.Caller.CompanyCode, V.Local.sPath)
+F.Intrinsic.Control.CallSub(CheckDirectories, "Directories", V.Local.sPath)
+
+F.Intrinsic.String.Build("{0}\Last_Run.dat", V.Local.sPath, V.Local.sPath)
+F.Intrinsic.File.String2File(V.Local.sPath, V.Ambient.Now)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", True, "Callback", "Exit", "PROJECT", "4980", "PROJECTTITLE", "Unattended Import Launcher", "TASK", "Unattended_Import_Launcher")
+F.Intrinsic.Control.EndTry
+Program.Sub.WriteLastProcessTime.End
+
+Program.Sub.Exit.Start
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.CallSub(Connection, "CONNECT", False)
+F.Intrinsic.Control.CallSub(ScriptPIDClear, "PROJECT", "4980", "TASK", "Unattended_Import_Launcher")
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", True, "Callback", "Exit", "PROJECT", "4980", "PROJECTTITLE", "Unattended Import Launcher", "TASK", "Unattended_Import_Launcher")
+F.Intrinsic.Control.EndTry
+Program.Sub.Exit.End
