@@ -1,0 +1,228 @@
+00-Due Date (Seq.)-C:  Work Order Operations
+01-Full Labor Sequence-A:  Work Order Header
+02-Work Order Number-A:  Work Order Header
+03-Router Number-O:  Router
+04-Router Description-O:  Router
+05-FG Part-A:  Work Order Header
+06-FG Part Description-A:  Work Order Header
+07-Customer Number-A:  Work Order Header
+08-Customer Name-A:  Work Order Header
+09-Price-A:  Work Order Header
+10-Priority-A:  Work Order Header
+11-Product Line-A:  Work Order Header
+12-Project-A:  Work Order Header
+13-Phase-A:  Work Order Header
+14-Full Sales Order-A:  Work Order Header
+15-Run Quantity-A:  Work Order Header
+16-PO Number-A:  Work Order Header
+17-Additional Description 1-A:  Work Order Header
+18-Additional Description 2-A:  Work Order Header
+19-Additional Description 3-A:  Work Order Header
+20-Customer Drawing Number-B:  Work Order Options
+21-Customer Part Number-B:  Work Order Options
+22-Direct BOM Parent WO-K:	BOM Parent
+23-User Field 1-B:  Work Order Options
+24-User Field 2-B:  Work Order Options
+25-User Field 3-B:  Work Order Options
+26-User Field 4-B:  Work Order Options
+27-User Field 5-B:  Work Order Options
+28-User Field 6-B:  Work Order Options
+29-User Field 7-B:  Work Order Options
+30-User Field 8-B:  Work Order Options
+31-User Field 9-B:  Work Order Options
+32-User Field 10-B:  Work Order Options
+33-Raw Material-C:  Work Order Operations
+34-Labor Comments-C:  Work Order Operations
+35-Bin-D:  Inventory Header (FG)
+36-Sort Code-D:  Inventory Header (FG)
+37-Vendor Customer-D:  Inventory Header (FG)
+38-User Defined 1-D:  Inventory Header (FG)
+39-User Defined 2-D:  Inventory Header (FG)
+40-Weight-E:  Part Options (FG)
+41-Stocking Bin-E:  Part Options (FG)
+42-Length-E:  Part Options (FG)
+43-Width-E:  Part Options (FG)
+44-Thickness-E:  Part Options (FG)
+45-Density-E:  Part Options (FG)
+46-Alternate Description 1-E:  Part Options (FG)
+47-Alternate Description 2-E:  Part Options (FG)
+48-Part Number-F:  Inventory Header (Raw Material)
+49-Product Line-F:  Inventory Header (Raw Material)
+50-Bin-F:  Inventory Header (Raw Material)
+51-Sort Code-F:  Inventory Header (Raw Material)
+52-Vendor Customer-F:  Inventory Header (Raw Material)
+53-User Defined 1-F:  Inventory Header (Raw Material)
+54-User Defined 2-F:  Inventory Header (Raw Material)
+55-Weight-G:  Part Options (Raw Material)
+56-Stocking Bin-G:  Part Options (Raw Material)
+57-Length-G:  Part Options (Raw Material)
+58-Width-G:  Part Options (Raw Material)
+59-Thickness-G:  Part Options (Raw Material)
+60-Density-G:  Part Options (Raw Material)
+61-Alternate Description 1-G:  Part Options (Raw Material)
+62-Alternate Description 2-G:  Part Options (Raw Material)
+63-Order Number-H:  Sales Order Header
+64-Order Type-H:  Sales Order Header
+65-Customer PO-H:  Sales Order Header
+66-User Field 1-I:  Sales Order Options
+67-User Field 2-I:  Sales Order Options
+68-User Field 3-I:  Sales Order Options
+69-User Field 4-I:  Sales Order Options
+70-User Field 5-I:  Sales Order Options
+71-Order Line-J:  Sales Order Line
+72-Line Type-J:  Sales Order Line
+73-Customer Part Number-J:  Sales Order Line
+74-Info 1-J:  Sales Order Line
+75-Info 2-J:  Sales Order Line
+76-Group ID-J:  Sales Order Line
+77-User Field 1-J:  Sales Order Line
+78-User Field 2-J:  Sales Order Line
+79-User Field 3-J:  Sales Order Line
+80-User Field 4-J:  Sales Order Line
+81-User Field 5-J:  Sales Order Line
+82-FG Part (W/O Rev)-D:  Inventory Header (FG)
+83-FG Part Rev-D:  Inventory Header (FG)
+84-FG Part Loc-D:  Inventory Header (FG)
+85-Raw Mat Part (W/O Rev)-F:  Inventory Header (Raw Material)
+86-Raw Mat Part Rev-F:  Inventory Header (Raw Material)
+87-Raw Mat Part Description-F:  Inventory Header (Raw Material)
+88-Job-A:  Work Order Header
+89-Suffix-A:  Work Order Header
+90-Labor Sequence-C:  Work Order Operations
+91-Work Center-C:  Work Order Operations
+92-Date Created-A:  Work Order Header
+93-Remaining Quantity (Job)-A:  Work Order Header
+94-Remaining Quantity (Seq.)-C:  Work Order Operations
+95-Start Date (Job)-A:  Work Order Header
+96-Start Date (Seq.)-C:  Work Order Operations
+97-Due Date (Job)-A:  Work Order Header
+98-Workcenter List-C:  Work Order Operations
+99-Direct BOM Parent Product Line-K:	BOM Parent
+100-Product Line-L:	Top BOM Parent
+101-Direct BOM Parent Part-K:	BOM Parent
+102-Direct BOM Parent PO-K:	BOM Parent
+103-Sales Order-L:	Top BOM Parent
+104-Direct BOM Parent SO-K:	BOM Parent
+105-Sales Order Line-L:	Top BOM Parent
+106-Direct BOM Parent SO Line-K:	BOM Parent
+107-Full Sales Order-L:	Top BOM Parent
+108-Direct BOM Parent Full SO-K:	BOM Parent
+109-Part-L:	Top BOM Parent
+110-Purchase Order-L:	Top BOM Parent
+111-Work Order-L:	Top BOM Parent
+112-Sales Order User Field 1-L:	Top BOM Parent
+113-Sales Order User Field 2-L:	Top BOM Parent
+114-Sales Order User Field 3-L:	Top BOM Parent
+115-Sales Order User Field 4-L:	Top BOM Parent
+116-Sales Order User Field 5-L:	Top BOM Parent
+117-Sales Order User Field 1-K:	BOM Parent
+118-Sales Order User Field 2-K:	BOM Parent
+119-Sales Order User Field 3-K:	BOM Parent
+120-Sales Order User Field 4-K:	BOM Parent
+121-Sales Order User Field 5-K:	BOM Parent
+122-SO Line User Field 1-L:	Top BOM Parent
+123-SO Line User Field 2-L:	Top BOM Parent
+124-SO Line User Field 3-L:	Top BOM Parent
+125-SO Line User Field 4-L:	Top BOM Parent
+126-SO Line User Field 5-L:	Top BOM Parent
+127-SO Line User Defined 1-L:	Top BOM Parent
+128-SO Line User Defined 2-L:	Top BOM Parent
+129-SO Line User Field 1-K:	BOM Parent
+130-SO Line User Field 2-K:	BOM Parent
+131-SO Line User Field 3-K:	BOM Parent
+132-SO Line User Field 4-K:	BOM Parent
+133-SO Line User Field 5-K:	BOM Parent
+134-SO Line User Defined 1-K:	BOM Parent
+135-SO Line User Defined 2-K:	BOM Parent
+136-Workcenter List-K:	BOM Parent
+137-Workcenter List-L:	Top BOM Parent
+138-SO Ship To ID-H:  Sales Order Header
+139-SO Ship To Name-H:  Sales Order Header
+140-SO Ship To Address 1-H:  Sales Order Header
+141-SO Ship To Address 2-H:  Sales Order Header
+142-SO Ship To Address 3-H:  Sales Order Header
+143-SO Ship To Address 4-H:  Sales Order Header
+144-SO Ship To Address 5-H:  Sales Order Header
+145-SO Ship To City-H:  Sales Order Header
+146-SO Ship To State-H:  Sales Order Header
+147-SO Ship To Zip-H:  Sales Order Header
+148-SO Ship To Country-H:  Sales Order Header
+149-SO Ship To Attention-H:  Sales Order Header
+150-SO Ship To ID-K:	BOM Parent
+151-SO Ship To Name-K:	BOM Parent
+152-SO Ship To Address 1-K:	BOM Parent
+153-SO Ship To Address 2-K:	BOM Parent
+154-SO Ship To Address 3-K:	BOM Parent
+155-SO Ship To Address 4-K:	BOM Parent
+156-SO Ship To Address 5-K:	BOM Parent
+157-SO Ship To City-K:	BOM Parent
+158-SO Ship To State-K:	BOM Parent
+159-SO Ship To Zip-K:	BOM Parent
+160-SO Ship To Country-K:	BOM Parent
+161-SO Ship To Attention-K:	BOM Parent
+162-SO Ship To ID-L:	Top BOM Parent
+163-SO Ship To Name-L:	Top BOM Parent
+164-SO Ship To Address 1-L:	Top BOM Parent
+165-SO Ship To Address 2-L:	Top BOM Parent
+166-SO Ship To Address 3-L:	Top BOM Parent
+167-SO Ship To Address 4-L:	Top BOM Parent
+168-SO Ship To Address 5-L:	Top BOM Parent
+169-SO Ship To City-L:	Top BOM Parent
+170-SO Ship To State-L:	Top BOM Parent
+171-SO Ship To Zip-L:	Top BOM Parent
+172-SO Ship To Country-L:	Top BOM Parent
+173-SO Ship To Attention-L:	Top BOM Parent
+174-Sequence-M:	Next Labor Sequence
+175-Description-M:	Next Labor Sequence
+176-Operation-M:	Next Labor Sequence
+177-WC-M:	Next Labor Sequence
+178-Router Sequence-M:	Next Labor Sequence
+179-Quantity-M:	Next Labor Sequence
+180-Estimated Hours-M:	Next Labor Sequence
+181-Start Date-M:	Next Labor Sequence
+182-Due Date-M:	Next Labor Sequence
+183-Good Pieces-M:	Next Labor Sequence
+184-Scrap-M:	Next Labor Sequence
+185-Closed-M:	Next Labor Sequence
+186-Sequence-N:	Previous Labor Sequence
+187-Description-N:	Previous Labor Sequence
+188-Operation-N:	Previous Labor Sequence
+189-WC-N:	Previous Labor Sequence
+190-Router Sequence-N:	Previous Labor Sequence
+191-Quantity-N:	Previous Labor Sequence
+192-Estimated Hours-N:	Previous Labor Sequence
+193-Start Date-N:	Previous Labor Sequence
+194-Due Date-N:	Previous Labor Sequence
+195-Good Pieces-N:	Previous Labor Sequence
+196-Scrap-N:	Previous Labor Sequence
+197-Closed-N:	Previous Labor Sequence
+198-Material Sequence-C:  Work Order Operations
+199-Previous WC List-C:  Work Order Operations
+200-Subsequent WC List-C:  Work Order Operations
+201-Exported-A:  Work Order Header
+202-UM-D:  Inventory Header (FG)
+203-UM-F:  Inventory Header (Raw Material)
+204-Last Schedule Date-A:  Work Order Header
+205-WG-C:  Work Order Operations
+206-Product Line-O:  Router
+207-Scrap Percentage-O:  Router
+208-Customer-O:  Router
+209-Customer Part-O:  Router
+210-Customer Drawing-O:  Router
+211-User 1-O:  Router
+212-User 2-O:  Router
+213-Job Hold-A:  Work Order Header
+214-Part (Long)-A:  Work Order Header
+215-Part Rev (Long)-A:  Work Order Header
+216-Material (Long)-C:  Work Order Operations
+217-Material Rev(Long)-C:  Work Order Operations
+218-BOM Parent (Long)-K:	BOM Parent
+219-BOM Parent Rev (Long)-K:	BOM Parent
+220-Part (Long)-L:	Top BOM Parent
+221-Part Rev (Long)-L:	Top BOM Parent
+222-Operation-C:  Work Order Operations
+223-Router Sequence-C:  Work Order Operations
+224-Quantity-C:  Work Order Operations
+225-Estimated Hours-C:  Work Order Operations
+226-Good Pieces-C:  Work Order Operations
+227-Scrap-C:  Work Order Operations
