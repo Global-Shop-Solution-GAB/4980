@@ -1,0 +1,17 @@
+OrderNo*!*//PPSImport/ProductionOrders/
+Description*!*//PPSImport/ProductionOrders/ProductionOrder/
+CustomerOrderNo*!*//PPSImport/ProductionOrders/ProductionOrder/
+CustomerName*!*//PPSImport/ProductionOrders/ProductionOrder/
+CustomerNo*!*//PPSImport/ProductionOrders/ProductionOrder/
+PartNo*!*//PPSImport/ProductionOrders/ProductionOrder/
+PartNoExt*!*//PPSImport/ProductionOrders/ProductionOrder/
+PartDescription*!*//PPSImport/ProductionOrders/ProductionOrder/
+DrawingNo*!*//PPSImport/ProductionOrders/ProductionOrder/
+CADFilename*!*//PPSImport/ProductionOrders/ProductionOrder/
+Assembly*!*//PPSImport/ProductionOrders/ProductionOrder/
+DueDate*!*//PPSImport/ProductionOrders/ProductionOrder/
+Priority*!*//PPSImport/ProductionOrders/ProductionOrder/
+DesiredQuantity*!*//PPSImport/ProductionOrders/ProductionOrder/
+Status*!*//PPSImport/ProductionOrders/ProductionOrder/
+WorkplanName*!*//PPSImport/ProductionOrders/ProductionOrder/
+Material*!*//PPSImport/ProductionOrders/ProductionOrder/
