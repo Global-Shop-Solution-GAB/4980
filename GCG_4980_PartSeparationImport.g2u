@@ -1,0 +1,751 @@
+Program.Sub.Preflight.Start
+Program.External.Include.Library("GCG_4980_SharedFunctions.lib")
+Program.External.Include.Library("JB0455.lib")
+V.Global.bUnattended.Declare(Boolean, False)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'GCG_4980_PartSeparationImport.g2u
+'Trey S
+'2021-04-10
+'This script is part of the 4980 standard nesting interface
+'This script is meant to import part separation data and post it
+'Good and scrap quantity, time, and operator will be posted
+'pass PROFILE, TYPE
+'currently only available for Trumpf Boost
+
+F.Intrinsic.Control.Try
+
+'first check if enabled
+F.Intrinsic.Control.CallSub(Connection, "Connect", True)
+F.Intrinsic.Control.CallSub(GetSetting, "TYPE", "PART_SEPARATION", "SETTING", "ENABLED", "PROFILE", V.Passed.Profile)
+F.Intrinsic.Control.CallSub(Connection, "Connect", False)
+F.Intrinsic.Control.If(V.Args.Setting.Trim, !=, "")
+	F.Intrinsic.Control.If(V.Args.Setting)
+		F.Intrinsic.Control.If(V.Caller.Hook, =, 38130)
+			V.Global.bUnattended.Set(True)
+		F.Intrinsic.Control.EndIf
+
+		F.Intrinsic.Control.CallSub(LoadPartSeparationDataTable)
+		F.Intrinsic.Control.CallSub(LoadFiles)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.LoadFiles.Start
+F.Intrinsic.Control.Try
+
+V.Local.bExists.Declare(Boolean)
+V.Local.sMessage.Declare(String)
+V.Local.sFileList.Declare(String)
+V.Local.iCounter.Declare(Long)
+V.Local.sExtension.Declare(String)
+V.Local.bLocked.Declare(Boolean)
+V.Local.sFullFilePath.Declare(String)
+V.Local.sPath.Declare(String)
+V.Local.bInString.Declare(Boolean)
+V.Local.bInvalid.Declare(Boolean)
+V.Local.sInvalidPath.Declare(String)
+V.Local.sProcessedPath.Declare(String)
+V.Local.sBoostFile.Declare(String)
+
+'grab path, file
+F.Intrinsic.Control.CallSub(Connection, "Connect", True)
+F.Intrinsic.Control.CallSub(GetSetting, "TYPE", "PART_SEPARATION", "SETTING", "BOOST_FILE", "PROFILE", V.Passed.Profile)
+V.Local.sBoostFile.Set(V.Args.Setting.Trim)
+F.Intrinsic.Control.CallSub(GetSetting, "TYPE", "PART_SEPARATION", "SETTING", "IMPORT_PATH", "PROFILE", V.Passed.Profile)
+F.Intrinsic.Control.CallSub(Connection, "Connect", False)
+F.Intrinsic.Control.If(V.Args.Setting.Trim, !=, "")
+	F.Intrinsic.Control.CallSub(CheckPathSlash, "Path", V.Args.Setting)
+	V.Local.sPath.Set(V.Args.Return_Path)
+	
+	'check if path exists
+	F.Intrinsic.File.DirExists(V.Local.sPath, V.Local.bExists)
+	F.Intrinsic.Control.If(V.Local.bExists)
+		'build paths
+		F.Intrinsic.String.Build("{0}Invalid", V.Local.sPath, V.Local.sInvalidPath)
+		F.Intrinsic.String.Build("{0}Processed", V.Local.sPath, V.Local.sProcessedPath)
+		
+		'check for any files to process
+		F.Intrinsic.File.GetFileList(V.Local.sPath, V.Local.sFileList)
+		F.Intrinsic.Control.If(V.Local.sFileList.Trim, !=, "")
+		
+			F.Intrinsic.String.Split(V.Local.sFileList, ":", V.Local.sFileList)
+			F.Intrinsic.Control.For(V.Local.iCounter, 0, V.Local.sFileList.UBound, 1)
+				V.Local.bInValid.Set(False)
+				F.Intrinsic.String.Build("{0}{1}", V.Local.sPath, V.Local.sFileList(V.Local.iCounter), V.Local.sFullFilePath)
+				F.Intrinsic.String.Build("Processing file [{0}]...", V.Local.sFullFilePath, V.Local.sMessage)
+				F.Intrinsic.Control.CallSub(AddLog, "Project", "4980", "Task", "GCG_4980_PartSeparationImport", "Message", V.Local.sMessage)
+				
+				F.Intrinsic.File.GetExtensionComponent(V.Local.sFileList(V.Local.iCounter), V.Local.sExtension)
+				F.Intrinsic.File.IsFileLocked(V.Local.sFullFilePath, V.Local.bLocked)
+				
+				'check the import type
+				F.Intrinsic.Control.SelectCase(V.Passed.Type)
+					F.Intrinsic.Control.Case("B")
+						'check the extension
+						F.Intrinsic.Control.If(V.Local.sExtension.UCase.Trim, =, "XML")
+							'check the file name
+							F.Intrinsic.String.IsInString(V.Local.sFileList(V.Local.iCounter), V.Local.sBoostFile, True, V.Local.bInString)
+							F.Intrinsic.Control.If(V.Local.bInString)
+								'check if locked
+								F.Intrinsic.Control.If(V.Local.bLocked.Not)
+									'check file type
+									F.Intrinsic.Control.If(V.Local.sBoostFile, =, "ProdOperationsExp")
+										F.Intrinsic.Control.CallSub(ReadBoostProdOperationsExpXML, "File", V.Local.sFullFilePath)
+									F.Intrinsic.Control.ElseIf(V.Local.sBoostFile, =, "PdaExp")
+										F.Intrinsic.Control.CallSub(ReadBoostPdaExpXML, "File", V.Local.sFullFilePath)
+									F.Intrinsic.Control.EndIf
+									
+								F.Intrinsic.Control.Else
+									F.Intrinsic.String.Build("File [{0}] is locked and cannot currently be read. Please close the file if you have it open and try again. The file will be skipped for now.", V.Local.sFileList(V.Local.iCounter), V.Local.sMessage)
+									F.Intrinsic.Control.CallSub(Message, "Message", V.Local.sMessage)
+									F.Intrinsic.Control.CallSub(AddLog, "Project", "4980", "Task", "GCG_4980_PartSeparationImport", "Message", V.Local.sMessage)
+								F.Intrinsic.Control.EndIf
+							F.Intrinsic.Control.Else
+								V.Local.bInvalid.Set(True)
+							F.Intrinsic.Control.EndIf
+						F.Intrinsic.Control.Else
+							V.Local.bInvalid.Set(True)
+						F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.EndSelect
+				
+				'if invalid, move the file
+				F.Intrinsic.Control.If(V.Local.bInvalid)
+					F.Intrinsic.String.Build("File [{0}] is an invalid file for this import. The file will be moved to [{1}].", V.Local.sFileList(V.Local.iCounter), V.Local.sInvalidPath, V.Local.sMessage)
+					'F.Intrinsic.Control.CallSub(Message, "Message", V.Local.sMessage)
+					F.Intrinsic.Control.CallSub(AddLog, "Project", "4980", "Task", "GCG_4980_PartSeparationImport", "Message", V.Local.sMessage)
+					F.Intrinsic.Control.CallSub(MoveFile, "File", V.Local.sFullFilePath, "New_Path", V.Local.sInvalidPath)
+				F.Intrinsic.Control.Else
+					F.Intrinsic.String.Build("File [{0}] processed successfully. The file will be moved to [{1}].", V.Local.sFileList(V.Local.iCounter), V.Local.sProcessedPath, V.Local.sMessage)
+					F.Intrinsic.Control.CallSub(AddLog, "Project", "4980", "Task", "GCG_4980_PartSeparationImport", "Message", V.Local.sMessage)
+					F.Intrinsic.Control.CallSub(MoveFile, "File", V.Local.sFullFilePath, "New_Path", V.Local.sProcessedPath)
+				F.Intrinsic.Control.EndIf
+				
+			F.Intrinsic.Control.Next(V.Local.iCounter)
+			V.Local.sFileList.Redim(0, 0)
+			
+			'now done processing files, run import
+			F.Intrinsic.Control.If(V.DataTable.dtPartSeparation.RowCount, >, 0)
+				F.Intrinsic.Control.CallSub(ImportPartSeparation)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+		
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("The Part Separation Import path set up for profile [{0}], [{1}], is not valid.", V.Passed.Profile, V.Args.Setting, V.Local.sMessage)
+		F.Intrinsic.Control.CallSub(Message, "Message", V.Local.sMessage)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadFiles.End
+
+Program.Sub.ReadBoostProdOperationsExpXML.Start
+'read boost ProdOperationsExp.xml file in to the dtPartSeparationDataTable
+'pass file
+
+'file layout:
+'<?xml version="1.0" encoding="Windows-1252"?>
+'<PPSExport Version="1.1">
+'  <ProductionOperationFeedback>
+'    <Operation OrderNo="82851_17_22">
+'      <OperationNo>0010</OperationNo>
+'      <PartNo>30567893</PartNo>
+'      <WorkPlace>Boost</WorkPlace>
+'      <CostCenter />
+'      <TimeStamp>09.12.2017 16:07:38</TimeStamp>
+'      <ReturnType>30</ReturnType>
+'      <ProcessedParts>5</ProcessedParts>
+'      <ScrapParts>0</ScrapParts>
+'      <MissingParts>0</MissingParts>
+'      <TargetProcessingTimePerPiece>0.08</TargetProcessingTimePerPiece>
+'      <ProcessingTime>2.9298</ProcessingTime>
+'      <SetupTime>0.0000</SetupTime>
+'      <MeasuringTime>0.0000</MeasuringTime>
+'      <OperationStart>09.12.2017 16:07:15</OperationStart>
+'      <OperationEnd>09.12.2017 16:07:38</OperationEnd>
+'      <PartWeight>5.39899</PartWeight>
+'      <PartArea>0.45603673</PartArea>
+'      <PartLength>762.00000</PartLength>
+'      <PartWidth>762.00000</PartWidth>
+'      <Assembly>30580227</Assembly>
+'      <DataExt />
+'      <OrderNoExt />
+'      <CollectiveOrder />
+'      <QuantityReports>
+'        <QuantityReport>
+'          <ReportingTime>09.12.2017 16:07:28</ReportingTime>
+'          <ProcessedParts>2</ProcessedParts>
+'          <ScrapParts>0</ScrapParts>
+'          <MissingParts>0</MissingParts>
+'          <BatchNo />
+'          <WorkPlace>Boost</WorkPlace>
+'          <ReportedBy>Service</ReportedBy>
+'          <Terminal>PC112566</Terminal>
+'        </QuantityReport>
+'        <QuantityReport>
+'          <ReportingTime>09.12.2017 16:07:38</ReportingTime>
+'          <ProcessedParts>3</ProcessedParts>
+'          <ScrapParts>0</ScrapParts>
+'          <MissingParts>0</MissingParts>
+'          <BatchNo />
+'          <WorkPlace>Boost</WorkPlace>
+'          <ReportedBy>Service</ReportedBy>
+'          <Terminal>PC112566</Terminal>
+'        </QuantityReport>
+'      </QuantityReports>
+'    </Operation>
+'  </ProductionOperationFeedback>
+'</PPSExport>
+
+F.Intrinsic.Control.Try
+
+V.Local.sDocument.Declare(String)
+V.Local.sFullWorkOrder.Declare(String)
+V.Local.sWorkOrderSplit.Declare(String)
+V.Local.sBound.Declare(String)
+V.Local.iTotalParts.Declare(Long)
+V.Local.iGoodParts.Declare(Long)
+V.Local.iScrapParts.Declare(Long)
+V.Local.fTotalTime.Declare(Float)
+V.Local.fTimePerPart.Declare(Float)
+V.Local.bEOFOrders.Declare(Boolean, False)
+V.Local.iOrderCounter.Declare(Long, 0)
+V.Local.sQuery.Declare(String)
+V.Local.iQuantityCounter.Declare(Long, 0)
+V.Local.bEOFQuantities.Declare(Boolean, False)
+V.Local.sWorkcenter.Declare(String)
+V.Local.sOperator.Declare(String)
+
+'load the document
+F.Intrinsic.String.Build("BOOST-PART-SEPARATION-XML-{0}-{1}", V.Ambient.Now.FormatYYYYMMDDHHNNSS, V.Ambient.Ticks, V.Local.sDocument)
+F.Global.XML.LoadDocument(V.Local.sDocument, V.Args.File, False, True, False, False)
+
+'check for orders
+F.Global.XML.Query(V.Local.sDocument, "Orders", "//ProductionOperationFeedback/Operation", False)
+F.Global.XML.ReadNodeSetBound(V.Local.sDocument, "Orders", V.Local.sBound)
+F.Intrinsic.String.Split(V.Local.sBound, "*!*", V.Local.sBound)
+F.Intrinsic.Control.If(V.Local.sBound(1), >, -1)
+	'loop through orders
+	V.Local.bEOFOrders.Set(False)
+	F.Intrinsic.Control.DoUntil(V.Local.bEOFOrders)
+		F.Intrinsic.Math.Add(V.Local.iOrderCounter, 1, V.Local.iOrderCounter)
+		
+		'grab work order
+		F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/@OrderNo", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.sFullWorkOrder.Set(V.Args.XML_Value)
+		F.Intrinsic.String.Split(V.Local.sFullWorkOrder, "-", V.Local.sWorkOrderSplit)
+		V.Local.sWorkOrderSplit.RedimPreserve(0, 2)
+		
+		'grab good parts
+		F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/ProcessedParts", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.iGoodParts.Set(V.Args.XML_Value.Long)
+		
+		'grab scrap parts
+		F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/ScrapParts", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.iScrapParts.Set(V.Args.XML_Value.Long)
+		
+		F.Intrinsic.Math.Add(V.Local.iGoodParts, V.Local.iScrapParts, V.Local.iTotalParts)
+		
+		'grab total time
+		F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/ProcessingTime", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.fTotalTime.Set(V.Args.XML_Value.Long)
+
+		F.Intrinsic.Math.Div(V.Local.fTotalTime, V.Local.iTotalParts, V.Local.fTimePerPart)
+		
+		'check for quantity reports
+		F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/QuantityReports/QuantityReport", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Global.XML.Query(V.Local.sDocument, "Quantities", V.Local.sQuery, False)
+		F.Global.XML.ReadNodeSetBound(V.Local.sDocument, "Quantities", V.Local.sBound)
+		F.Intrinsic.String.Split(V.Local.sBound, "*!*", V.Local.sBound)
+		F.Intrinsic.Control.If(V.Local.sBound(1), >, -1)
+			'loop through quantity reports
+			V.Local.bEOFQuantities.Set(False)
+			V.Local.iQuantityCounter.Set(0)
+			F.Intrinsic.Control.DoUntil(V.Local.bEOFQuantities)
+				F.Intrinsic.Math.Add(V.Local.iQuantityCounter, 1, V.Local.iQuantityCounter)
+				
+				'grab good parts
+				F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/QuantityReports/QuantityReport[{1}]/ProcessedParts", V.Local.iOrderCounter, V.Local.iQuantityCounter, V.Local.sQuery)
+				F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+				V.Local.iGoodParts.Set(V.Args.XML_Value.Long)
+				
+				'grab scrap parts
+				F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/QuantityReports/QuantityReport[{1}]/ScrapParts", V.Local.iOrderCounter, V.Local.iQuantityCounter, V.Local.sQuery)
+				F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+				V.Local.iScrapParts.Set(V.Args.XML_Value.Long)
+				
+				F.Intrinsic.Math.Add(V.Local.iGoodParts, V.Local.iScrapParts, V.Local.iTotalParts)
+				F.Intrinsic.Math.Mult(V.Local.iTotalParts, V.Local.fTimePerPart, V.Local.fTotalTime)
+				
+				'grab workplace
+				F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/QuantityReports/QuantityReport[{1}]/WorkPlace", V.Local.iOrderCounter, V.Local.iQuantityCounter, V.Local.sQuery)
+				F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+				V.Local.sWorkcenter.Set(V.Args.XML_Value.UCase)
+				
+				'grab reported by
+				'employee will be GS employee ID followed by name
+				F.Intrinsic.String.Build("//ProductionOperationFeedback/Operation[{0}]/QuantityReports/QuantityReport[{1}]/ReportedBy", V.Local.iOrderCounter, V.Local.iQuantityCounter, V.Local.sQuery)
+				F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+				F.Intrinsic.String.Split(V.Args.XML_Value.Trim, " ", V.Local.sOperator)
+				V.Local.sOperator.RedimPreserve(0, 0)
+				
+				'convert time to hours
+				F.Intrinsic.Math.Div(V.Local.fTotalTime, 60, V.Local.fTotalTime)
+				
+				'add to separation datatable
+				F.Data.DataTable.AddRow("dtPartSeparation", "IMPORT_TIMESTAMP", V.Ambient.Now, "JOB", V.Local.sWorkOrderSplit(0).Trim, "SUFFIX", V.Local.sWorkOrderSplit(1).Trim, "WORKCENTER", V.Local.sWorkcenter, "EMPLOYEE", V.Local.sOperator, "FILE", V.Args.File, "GOOD_PIECES", V.Local.iGoodParts, "BAD_PIECES", V.Local.iScrapParts, "TIME", V.Local.fTotalTime)
+				
+				F.Global.XML.Next(V.Local.sDocument, "Quantities", V.Local.bEOFQuantities)
+			F.Intrinsic.Control.Loop
+		F.Intrinsic.Control.EndIf
+		F.Global.XML.CloseSet(V.Local.sDocument, "Quantities")
+		V.Local.sBound.Redim(0, 0)
+		
+		F.Global.XML.Next(V.Local.sDocument, "Orders", V.Local.bEOFOrders)
+	F.Intrinsic.Control.Loop
+F.Intrinsic.Control.EndIf
+F.Global.XML.CloseSet(V.Local.sDocument, "Orders")
+V.Local.sBound.Redim(0, 0)
+
+F.Global.XML.CloseDocument(V.Local.sDocument)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.ReadBoostProdOperationsExpXML.End
+
+Program.Sub.ReadBoostPdaExpXML.Start
+'read boost PdaExp.xml file in to the dtPartSeparationDataTable
+'pass file
+
+'file layout:
+'<?xml version="1.0" encoding="Windows-1252"?>
+'<PPSExport Version="1.1">
+'  <PDAMessages>
+'    <PDAMessage>
+'      <TimeStamp>14.04.2021 15:03:53</TimeStamp>
+'      <OrderNo>105850-004-000300</OrderNo>
+'      <OperationNo>0020</OperationNo>
+'      <PartNo>35h200119-01_2-REVB</PartNo>
+'      <WorkPlace>*</WorkPlace>
+'      <CostCenter />
+'      <DesiredQuantity>405</DesiredQuantity>
+'      <ProcessedParts>4</ProcessedParts>
+'      <ProcessedPartsTotal>216</ProcessedPartsTotal>
+'      <ScrapParts>0</ScrapParts>
+'      <ScrapPartsTotal>0</ScrapPartsTotal>
+'      <MissingParts>0</MissingParts>
+'      <MissingPartsTotal>0</MissingPartsTotal>
+'      <ProcessingTime>0.4000</ProcessingTime>
+'      <ProcessingTimeTotal>22.2288</ProcessingTimeTotal>
+'      <OperationStatus>60</OperationStatus>
+'      <OperationStatusPrevious>60</OperationStatusPrevious>
+'      <BatchNo />
+'      <IsCorrection>0</IsCorrection>
+'      <ReportedBy>10626 Allen Barnes</ReportedBy>
+'      <Terminal>L5030-Fiber-01</Terminal>
+'      <MessageType>12</MessageType>
+'      <DataExt />
+'      <OrderNoExt />
+'      <CollectiveOrder />
+'      <CustomerOrderNo />
+'      <CustomerBookingNo />
+'      <ErpID />
+'      <Assembly />
+'      <ProcessedSheetId>93372</ProcessedSheetId>
+'    </PDAMessage>
+' </PDAMessages>
+'</PPSExport>
+
+F.Intrinsic.Control.Try
+
+V.Local.sDocument.Declare(String)
+V.Local.sFullWorkOrder.Declare(String)
+V.Local.sWorkOrderSplit.Declare(String)
+V.Local.sBound.Declare(String)
+V.Local.iTotalParts.Declare(Long)
+V.Local.iGoodParts.Declare(Long)
+V.Local.iScrapParts.Declare(Long)
+V.Local.fTotalTime.Declare(Float)
+V.Local.fTimePerPart.Declare(Float)
+V.Local.bEOFOrders.Declare(Boolean, False)
+V.Local.iOrderCounter.Declare(Long, 0)
+V.Local.sQuery.Declare(String)
+V.Local.sWorkcenter.Declare(String)
+V.Local.sOperator.Declare(String)
+V.Local.sOperation.Declare(String)
+
+'load the document
+F.Intrinsic.String.Build("BOOST-PART-SEPARATION-XML-{0}-{1}", V.Ambient.Now.FormatYYYYMMDDHHNNSS, V.Ambient.Ticks, V.Local.sDocument)
+F.Global.XML.LoadDocument(V.Local.sDocument, V.Args.File, False, True, False, False)
+
+'check for orders
+F.Global.XML.Query(V.Local.sDocument, "Orders", "//PDAMessages/PDAMessage", False)
+F.Global.XML.ReadNodeSetBound(V.Local.sDocument, "Orders", V.Local.sBound)
+F.Intrinsic.String.Split(V.Local.sBound, "*!*", V.Local.sBound)
+F.Intrinsic.Control.If(V.Local.sBound(1), >, -1)
+	'loop through orders
+	V.Local.bEOFOrders.Set(False)
+	F.Intrinsic.Control.DoUntil(V.Local.bEOFOrders)
+		F.Intrinsic.Math.Add(V.Local.iOrderCounter, 1, V.Local.iOrderCounter)
+		
+		'grab work order
+		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/OrderNo", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.sFullWorkOrder.Set(V.Args.XML_Value)
+		F.Intrinsic.String.Split(V.Local.sFullWorkOrder, "-", V.Local.sWorkOrderSplit)
+		V.Local.sWorkOrderSplit.RedimPreserve(0, 2)
+		
+		'grab operation
+		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/OperationNo", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.sOperation.Set(V.Args.XML_Value)
+		
+		'grab workcenter
+		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/WorkPlace", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.sWorkcenter.Set(V.Args.XML_Value.UCase)
+'		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/Terminal", V.Local.iOrderCounter, V.Local.sQuery)
+'		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+'		V.Local.sWorkcenter.Set(V.Args.XML_Value.UCase)
+		
+		'grab processed parts
+		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/ProcessedParts", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.iGoodParts.Set(V.Args.XML_Value.Long)
+		F.Intrinsic.Control.If(V.Local.iGoodParts, <, 0)
+			V.Local.iGoodParts.Set(0)
+		F.Intrinsic.Control.EndIf
+		
+		'grab scrap parts
+		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/ScrapParts", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.iScrapParts.Set(V.Args.XML_Value.Long)
+		
+		'grab time
+		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/ProcessingTime", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		V.Local.fTotalTime.Set(V.Args.XML_Value.Float)
+		
+		'grab reported by
+		'employee will be GS employee ID followed by name
+		F.Intrinsic.String.Build("//PDAMessages/PDAMessage[{0}]/ReportedBy", V.Local.iOrderCounter, V.Local.sQuery)
+		F.Intrinsic.Control.CallSub(ReadXMLValue, "Document", V.Local.sDocument, "Query", V.Local.sQuery)
+		F.Intrinsic.String.Split(V.Args.XML_Value.Trim, " ", V.Local.sOperator)
+		V.Local.sOperator.RedimPreserve(0, 0)
+		
+		'calculate time
+		F.Intrinsic.Math.Add(V.Local.iScrapParts, V.Local.iGoodParts, V.Local.iTotalParts)
+		F.Intrinsic.Control.If(V.Local.iTotalParts, >, 0)
+			F.Intrinsic.Math.Div(V.Local.fTotalTime, V.Local.iTotalParts, V.Local.fTimePerPart)
+			
+			'now, if operation is 0020, we only want scrap. If operation is anything else, we only want good.
+			F.Intrinsic.Control.If(V.Local.sOperation.Trim, =, "0020")
+				V.Local.iGoodParts.Set(0)
+			F.Intrinsic.Control.Else
+				V.Local.iScrapParts.Set(0)
+			F.Intrinsic.Control.EndIf
+			
+			'now calculate new total time
+			F.Intrinsic.Math.Add(V.Local.iGoodParts, V.Local.iScrapParts, V.Local.iTotalParts)
+			F.Intrinsic.Math.Mult(V.Local.iTotalParts, V.Local.fTimePerPart, V.Local.fTotalTime)
+			
+			'add to separation datatable
+			F.Intrinsic.Control.If(V.Local.iTotalParts, >, 0)
+				F.Data.DataTable.AddRow("dtPartSeparation", "IMPORT_TIMESTAMP", V.Ambient.Now, "JOB", V.Local.sWorkOrderSplit(0).Trim, "SUFFIX", V.Local.sWorkOrderSplit(1).Trim, "WORKCENTER", V.Local.sWorkcenter.Trim, "EMPLOYEE", V.Local.sOperator, "FILE", V.Args.File, "GOOD_PIECES", V.Local.iGoodParts, "BAD_PIECES", V.Local.iScrapParts, "TIME", V.Local.fTotalTime)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+		
+		F.Global.XML.Next(V.Local.sDocument, "Orders", V.Local.bEOFOrders)
+	F.Intrinsic.Control.Loop
+F.Intrinsic.Control.EndIf
+F.Global.XML.CloseSet(V.Local.sDocument, "Orders")
+V.Local.sBound.Redim(0, 0)
+
+F.Global.XML.CloseDocument(V.Local.sDocument)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.ReadBoostPdaExpXML.End
+
+Program.Sub.ImportPartSeparation.Start
+'verify everything in dtPartSeparation and import
+
+F.Intrinsic.Control.Try
+
+V.Local.sInvalidWorkOrderPath.Declare(String)
+V.Local.sWorkcenters.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.sLaborCloseSetting.Declare(String)
+V.Local.iCounter.Declare(Long)
+V.Local.sClose.Declare(String)
+V.Local.sFilter.Declare(String)
+V.Local.fQuantity.Declare(Float)
+V.Local.sGoodPieces.Declare(String)
+V.Local.sBadPieces.Declare(String)
+V.Local.sTime.Declare(String)
+
+'first verify jobs
+F.Intrinsic.Control.CallSub(Connection, "Connect", True)
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(JOB) + '-' + RTRIM(SUFFIX), Cast(1 as Bit) from V_JOB_HEADER")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", False)
+F.Data.DataTable.AddColumn("dtPartSeparation", "WORKORDER_EXISTS", "Boolean", False)
+F.Data.DataTable.FillFromDictionary("dtPartSeparation", "dictTemp", "WORKORDER", "WORKORDER_EXISTS")
+F.Data.Dictionary.Close("dictTemp")
+
+'now check employees
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(EMPLOYEE), RTRIM(EMPLOYEE) from V_EMPLOYEE_MSTR where DATE_TERMINATION = '1900-01-01' and PAY_TYPE <> 'S'")
+F.Intrinsic.Control.CallSub(GetSetting, "TYPE", "PART_SEPARATION", "SETTING", "DEFAULT_EMPLOYEE", "PROFILE", V.Passed.Profile)
+F.Data.Dictionary.SetDefaultReturn("dictTemp", V.Args.Setting.Trim)
+F.Data.DataTable.FillFromDictionary("dtPartSeparation", "dictTemp", "EMPLOYEE")
+F.Data.Dictionary.Close("dictTemp")
+
+'check workcenters
+F.Intrinsic.String.Build("select WC_XREF from GCG_4980_NESTPROFILE where PROFILE = '{0}'", V.Passed.Profile, V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtWCXref", "Con", V.Local.sSQL)
+F.Intrinsic.Control.If(V.DataTable.dtWCXref.RowCount, >, 0)
+	'WC Cross Reference
+	F.Intrinsic.Control.If(V.DataTable.dtWCXref(0).WC_XREF!FieldVal)
+		F.Intrinsic.String.Build("Select UPPER(RTRIM(XREF)) as XREF, UPPER(RTRIM(WC)) from GCG_4980_WCXREF where profile = '{0}'", V.Passed.Profile, V.Local.sSQL)
+		F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", V.Local.sSQL)
+		F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+		F.Data.DataTable.FillFromDictionary("dtPartSeparation", "dictTemp", "WORKCENTER", "WORKCENTER")
+		F.Data.Dictionary.Close("dictTemp")
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.Close("dtWCXref")
+
+F.Intrinsic.Control.CallSub(GetSetting, "TYPE", "PART_SEPARATION", "SETTING", "WORKCENTERS", "PROFILE", V.Passed.Profile)
+F.Intrinsic.String.Split(V.Args.Setting, ",", V.Local.sWorkcenters)
+F.Intrinsic.String.Join(V.Local.sWorkcenters, "','", V.Local.sWorkcenters)
+V.Local.sWorkcenters.RedimPreserve(0, 0)
+
+F.Intrinsic.String.Build("select RTRIM(WORK_GROUP), RTRIM(WORK_GROUP) from V_WORKGROUP_HEAD where WORK_GROUP in ('{0}') union select RTRIM(MACHINE), RTRIM(MACHINE) from V_WORKCENTERS where MACHINE in ('{0}')", V.Local.sWorkcenters, V.Local.sSQL)
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", V.Local.sSQL)
+F.Data.Dictionary.SetDefaultReturn("dictTemp", "")
+F.Data.DataTable.FillFromDictionary("dtPartSeparation", "dictTemp", "WORKCENTER", "WORKCENTER")
+F.Data.Dictionary.Close("dictTemp")
+
+'now look for the separation sequences if any
+F.Intrinsic.String.Build("select RTRIM(JOB) + '-' + RTRIM(SUFFIX) WORKORDER, RTRIM(SEQ) SEQUENCE, RTRIM(PART) WORKCENTER, UNITS_OPEN, UNITS_COMPLETE from V_JOB_OPERATIONS where LMO = 'L' and PART in ('{0}')", V.Local.sWorkcenters, V.Local.sSQL)
+F.Data.DataTable.CreateFromSQL("dtOperations", "Con", V.Local.sSQL, True)
+
+F.Intrinsic.Control.CallSub(FillFromDataTable, "Source_DataTable", "dtOperations", "Target_DataTable", "dtPartSeparation", "Source_Key", "WORKORDER", "Target_Key", "WORKORDER", "Source_Column", "SEQUENCE", "Target_Column", "SEPARATION_SEQUENCE", "Default", "")
+
+F.Data.DataTable.AddColumn("dtPartSeparation", "ROUTER_WORKCENTER", "String", "")
+'F.Intrinsic.Control.CallSub(FillFromDataTable, "Source_DataTable", "dtOperations", "Target_DataTable", "dtPartSeparation", "Source_Key", "WORKORDER", "Target_Key", "WORKORDER", "Source_Column", "WORKCENTER", "Target_Column", "ROUTER_WORKCENTER", "Default", "")
+
+F.Data.DataTable.AddColumn("dtPartSeparation", "UNITS_OPEN", "Float", 0)
+F.Intrinsic.Control.CallSub(FillFromDataTable, "Source_DataTable", "dtOperations", "Target_DataTable", "dtPartSeparation", "Source_Key", "WORKORDER", "Target_Key", "WORKORDER", "Source_Column", "UNITS_OPEN", "Target_Column", "UNITS_OPEN", "Default", 0)
+
+F.Data.DataTable.AddColumn("dtPartSeparation", "UNITS_COMPLETE", "Float", 0)
+F.Intrinsic.Control.CallSub(FillFromDataTable, "Source_DataTable", "dtOperations", "Target_DataTable", "dtPartSeparation", "Source_Key", "WORKORDER", "Target_Key", "WORKORDER", "Source_Column", "UNITS_COMPLETE", "Target_Column", "UNITS_COMPLETE", "Default", 0)
+
+F.Data.DataTable.Close("dtOperations")
+
+'load customer quantity
+F.Data.Dictionary.CreateFromSQL("dictTemp", "Con", "select RTRIM(JOB) + '-' + RTRIM(SUFFIX), QTY_CUSTOMER from V_JOB_HEADER")
+F.Data.Dictionary.SetDefaultReturn("dictTemp", 0)
+F.Data.DataTable.AddColumn("dtPartSeparation", "CUSTOMER_QUANTITY", "Float", 0)
+F.Data.DataTable.FillFromDictionary("dtPartSeparation", "dictTemp", "WORKORDER", "CUSTOMER_QUANTITY")
+F.Data.Dictionary.Close("dictTemp")
+
+F.Data.DataTable.AddExpressionColumn("dtPartSeparation", "FINAL_WORKCENTER", "String", "IIF(Trim(IsNull(WORKCENTER, '')) = '', ROUTER_WORKCENTER, WORKCENTER)")
+
+F.Intrinsic.Control.CallSub(GetSetting, "PROFILE", V.Passed.Profile, "TYPE", "PART_SEPARATION", "SETTING", "CLOSE")
+F.Intrinsic.Control.If(V.Args.Setting.Trim, =, "")
+	V.Local.sLaborCloseSetting.Set("RUN_QUANTITY")
+F.Intrinsic.Control.Else
+	V.Local.sLaborCloseSetting.Set(V.Args.Setting.Trim)
+F.Intrinsic.Control.EndIf
+
+F.Data.DataTable.AddColumn("dtPartSeparation", "PROCESSED", "Boolean", False)
+F.Data.DataTable.AddColumn("dtPartSeparation", "CLOSE", "Boolean", False)
+
+F.Intrinsic.Control.CallSub(Connection, "Connect", False)
+
+'filter failed records
+F.Data.DataView.Create("dtPartSeparation", "dvPartSeparation", 22, "[WORKORDER_EXISTS] = False or [SEPARATION_SEQUENCE] = '' or [FINAL_WORKCENTER] = ''", "")
+F.Intrinsic.Control.If(V.DataView.dtPartSeparation!dvPartSeparation.RowCount, >, 0)
+	'move failed records to a CSV file
+	F.Data.DataView.ToDataTable("dtPartSeparation", "dvPartSeparation", "dtInvalidWorkOrders")
+	
+	F.Intrinsic.String.Build("{0}\Custom\4980\{1}\Part Separation\Failed Records", V.Caller.GlobalDir, V.Caller.CompanyCode, V.Local.sInvalidWorkOrderPath)
+	F.Intrinsic.Control.CallSub(CheckDirectories, "Directories", V.Local.sInvalidWorkOrderPath)
+	F.Intrinsic.String.Build("{0}\InvalidWorkOrders-{1}-{2}.csv", V.Local.sInvalidWorkOrderPath, V.Ambient.Now.FormatYYYYMMDDHHNNSS, V.Ambient.Ticks, V.Local.sInvalidWorkOrderPath)
+	F.Data.DataTable.SaveToCSV("dtInvalidWorkOrders", V.Local.sInvalidWorkOrderPath, True)
+	F.Data.DataTable.Close("dtInvalidWorkOrders")
+F.Intrinsic.Control.EndIf
+
+F.Data.DataView.SetFilter("dtPartSeparation", "dvPartSeparation", "[WORKORDER_EXISTS] = True and [SEPARATION_SEQUENCE] <> '' and [FINAL_WORKCENTER] <> ''")
+F.Data.DataView.ToDataTable("dtPartSeparation", "dvPartSeparation", "dtPartSeparationFinal", True)
+F.Data.DataView.Close("dtPartSeparation", "dvPartSeparation")
+F.Data.DataTable.Close("dtPartSeparation")
+
+'process records
+F.Intrinsic.Control.For(V.Local.iCounter, 0, V.DataTable.dtPartSeparationFinal.RowCount--, 1)
+	'check close
+	F.Intrinsic.Control.SelectCase(V.Local.sLaborCloseSetting)
+		F.Intrinsic.Control.Case("ALWAYS")
+			F.Data.DataTable.SetValue("dtPartSeparationFinal", V.Local.iCounter, "CLOSE", True)
+		F.Intrinsic.Control.Case("NEVER")
+			F.Data.DataTable.SetValue("dtPartSeparationFinal", V.Local.iCounter, "CLOSE", False)
+		F.Intrinsic.Control.Case("RUN_QUANTITY")
+			F.Intrinsic.String.Build("[WORKORDER] = '{0}' and PROCESSED = True", V.DataTable.dtPartSeparationFinal(V.Local.iCounter).WORKORDER!FieldValTrim, V.Local.sFilter)
+			F.Data.DataTable.Compute("dtPartSeparationFinal", "SUM(GOOD_PIECES)", V.Local.sFilter, V.Local.fQuantity)
+			F.Intrinsic.Math.Add(V.Local.fQuantity, V.DataTable.dtPartSeparationFinal(V.Local.iCounter).UNITS_COMPLETE!FieldValFloat, V.DataTable.dtPartSeparationFinal(V.Local.iCounter).GOOD_PIECES!FieldValFloat, V.Local.fQuantity)
+			F.Intrinsic.Control.If(V.Local.fQuantity, >=, V.DataTable.dtPartSeparationFinal(V.Local.iCounter).UNITS_OPEN!FieldValTrim)
+				F.Data.DataTable.SetValue("dtPartSeparationFinal", V.Local.iCounter, "CLOSE", True)
+			F.Intrinsic.Control.Else
+				F.Data.DataTable.SetValue("dtPartSeparationFinal", V.Local.iCounter, "CLOSE", False)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Case("CUSTOMER_QUANTITY")
+			F.Intrinsic.String.Build("[WORKORDER] = '{0}' and PROCESSED = True", V.DataTable.dtPartSeparationFinal(V.Local.iCounter).WORKORDER!FieldValTrim, V.Local.sFilter)
+			F.Data.DataTable.Compute("dtPartSeparationFinal", "SUM(GOOD_PIECES)", V.Local.sFilter, V.Local.fQuantity)
+			F.Intrinsic.Math.Add(V.Local.fQuantity, V.DataTable.dtPartSeparationFinal(V.Local.iCounter).UNITS_COMPLETE!FieldValFloat, V.DataTable.dtPartSeparationFinal(V.Local.iCounter).GOOD_PIECES!FieldValFloat, V.Local.fQuantity)
+			F.Intrinsic.Control.If(V.Local.fQuantity, >=, V.DataTable.dtPartSeparationFinal(V.Local.iCounter).CUSTOMER_QUANTITY!FieldValTrim)
+				F.Data.DataTable.SetValue("dtPartSeparationFinal", V.Local.iCounter, "CLOSE", True)
+			F.Intrinsic.Control.Else
+				F.Data.DataTable.SetValue("dtPartSeparationFinal", V.Local.iCounter, "CLOSE", False)
+			F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndSelect
+	
+	F.Intrinsic.Control.If(V.DataTable.dtPartSeparationFinal(V.Local.iCounter).Close!FieldVal)
+		V.Local.sClose.Set("Y")
+	F.Intrinsic.Control.Else
+		V.Local.sClose.Set("N")
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.String.Format(V.DataTable.dtPartSeparationFinal(V.Local.iCounter).GOOD_PIECES!FieldValFloat, "0.00", V.Local.sGoodPieces)
+	F.Intrinsic.String.Format(V.DataTable.dtPartSeparationFinal(V.Local.iCounter).BAD_PIECES!FieldValFloat, "0.00", V.Local.sBadPieces)
+	F.Intrinsic.String.Format(V.DataTable.dtPartSeparationFinal(V.Local.iCounter).TIME!FieldValTrim, "0.00", V.Local.sTime)
+	
+	F.Data.DataTable.AddRow("JB0455", "DATE", V.Ambient.Date.FormatMMDDYY, "EMPLOYEE", V.DataTable.dtPartSeparationFinal(V.Local.iCounter).EMPLOYEE!FieldValTrim, "JOB", V.DataTable.dtPartSeparationFinal(V.Local.iCounter).JOB!FieldValTrim, "SUFFIX", V.DataTable.dtPartSeparationFinal(V.Local.iCounter).SUFFIX!FieldValTrim, "SEQ", V.DataTable.dtPartSeparationFinal(V.Local.iCounter).SEPARATION_SEQUENCE!FieldValTrim, "WC", V.DataTable.dtPartSeparationFinal(V.Local.iCounter).FINAL_WORKCENTER!FieldValTrim, "HOURS", V.Local.sTime, "CLOSED", V.Local.sClose, "INDIRECT", "D", "RATETYPE", "R", "GOODPCS", V.Local.sGoodPieces, "SCRAPPCS", V.Local.sBadPieces)
+	
+	F.Data.DataTable.SetValue("dtPartSeparationFinal", V.Local.iCounter, "PROCESSED", True)
+F.Intrinsic.Control.Next(V.Local.iCounter)
+
+F.Intrinsic.Control.CallSub(JB0455Sync)
+
+'now save datatable
+F.Intrinsic.Control.CallSub(Connection, "Connect", True)
+F.Data.DataTable.SaveToDB("dtPartSeparationFinal", "Con", "GCG_4980_SEP_HIST", "", 128, "IMPORT_TIMESTAMP@!@IMPORT_TIMESTAMP*!*JOB@!@JOB*!*SUFFIX@!@SUFFIX*!*SEPARATION_SEQUENCE@!@SEPARATION_SEQUENCE*!*FINAL_WORKCENTER@!@WORKCENTER*!*GOOD_PIECES@!@GOOD_PIECES*!*BAD_PIECES@!@BAD_PIECES*!*TIME@!@TIME*!*EMPLOYEE@!@EMPLOYEE*!*IMPORT_USER@!@IMPORT_USER*!*PROFILE@!@PROFILE*!*FILE@!@FILE*!*CLOSE@!@CLOSE")
+F.Intrinsic.Control.CallSub(Connection, "Connect", False)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.ImportPartSeparation.End
+
+Program.Sub.LoadPartSeparationDataTable.Start
+F.Intrinsic.Control.Try
+
+F.Data.DataTable.Create("dtPartSeparation", True)
+F.Data.DataTable.AddColumn("dtPartSeparation", "IMPORT_TIMESTAMP", "Date")
+F.Data.DataTable.AddColumn("dtPartSeparation", "JOB", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "SUFFIX", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "SEPARATION_SEQUENCE", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "WORKCENTER", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "GOOD_PIECES", "Float", 0)
+F.Data.DataTable.AddColumn("dtPartSeparation", "BAD_PIECES", "Float", 0)
+F.Data.DataTable.AddColumn("dtPartSeparation", "TIME", "Float", 0)
+F.Data.DataTable.AddColumn("dtPartSeparation", "EMPLOYEE", "String", "")
+F.Data.DataTable.AddColumn("dtPartSeparation", "IMPORT_USER", "String", V.Caller.User)
+F.Data.DataTable.AddColumn("dtPartSeparation", "PROFILE", "String", V.Passed.Profile)
+F.Data.DataTable.AddColumn("dtPartSeparation", "File", "String", "")
+F.Data.DataTable.AddExpressionColumn("dtPartSeparation", "WORKORDER", "String", "Trim([JOB]) + '-' + Trim([SUFFIX])")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadPartSeparationDataTable.End
+
+Program.Sub.Message.Start
+'displays a message box or wait box, depending on if running unattended or not
+'pass message
+
+F.Intrinsic.Control.Try
+
+F.Intrinsic.Control.If(V.Caller.Hook, =, 38130)
+	F.Intrinsic.UI.InvokeWaitDialog(V.Args.Message, "Part Separation Import")
+	F.Intrinsic.UI.Sleep(3)
+	F.Intrinsic.UI.CloseWaitDialog
+F.Intrinsic.Control.Else
+	F.Intrinsic.UI.Msgbox(V.Args.Message, "Part Separation Import")
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.CallSub(AddLog, "Project", "4980", "Task", "GCG_4980_PartSeparationImport", "Message", V.Args.Message)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.Message.End
+
+Program.Sub.CheckPathSlash.Start
+'checks if the slash is at the end of a path
+'pass PATH
+
+F.Intrinsic.Control.Try
+
+V.Local.sPath.Declare(String)
+
+F.Intrinsic.Control.If(V.Args.Path.Right1, !=, "\", "AND", V.Args.Path.Right1, !=, "/")
+	F.Intrinsic.String.Build("{0}\", V.Args.Path, V.Local.sPath)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Variable.AddRV("RETURN_PATH", V.Local.sPath)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.CheckPathSlash.End
+
+Program.Sub.ReadXMLValue.Start
+'pass query, document 
+
+F.Intrinsic.Control.Try
+
+V.Local.sBound.Declare(String)
+V.Local.sValue.Declare(String, "")
+
+F.Global.XML.Query(V.Args.Document, "temp", V.Args.Query, False)
+F.Global.XML.ReadNodeSetBound(V.Args.Document, "temp", V.Local.sBound)
+F.Intrinsic.String.Split(V.Local.sBound, "*!*", V.Local.sBound)
+F.Intrinsic.Control.If(V.Local.sBound(1), >, -1)
+	F.Global.XML.ReadNodeSetValue(V.Args.Document, "temp", "text", V.Local.sValue)
+F.Intrinsic.Control.EndIf
+V.Local.sBound.Redim(0, 0)
+F.Global.XML.CloseSet(V.Args.Document, "temp")
+
+F.Intrinsic.Variable.AddRV("XML_Value", V.Local.sValue)
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.ReadXMLValue.End
+
+Program.Sub.FillFromDataTable.Start
+'pass SOURCE_DATATABLE, TARGET_DATATABLE, SOURCE_KEY, TARGET_KEY, SOURCE_COLUMN, TARGET_COLUMN, DEFAULT
+
+F.Intrinsic.Control.Try
+
+F.Data.Dictionary.CreateFromDataTable("dictFillFromDataTableTemp", V.Args.Source_DataTable, V.Args.Source_Key, V.Args.Source_Column)
+F.Data.Dictionary.SetDefaultReturn("dictFillFromDataTableTemp", V.Args.Default)
+F.Data.DataTable.FillFromDictionary(V.Args.Target_DataTable, "dictFillFromDataTableTemp", V.Args.Target_Key, V.Args.Target_Column)
+F.Data.Dictionary.Close("dictFillFromDataTableTemp")
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "Unattended", V.Global.bUnattended, "Project", "4980", "ProjectTitle", "Part Separation Import", "TASK", "GCG_4980_PartSeparationImport", "WRITE_LOG_FILE", True)
+F.Intrinsic.Control.EndTry
+Program.Sub.FillFromDataTable.End
